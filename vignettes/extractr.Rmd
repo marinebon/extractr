@@ -1,0 +1,62 @@
+---
+title: "extractr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{extractr}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(extractr) # devtools::install_local()
+# devtools::load_all()
+```
+
+## Get regions of interests
+
+```{r}
+if (!require("librarian"))
+  install.packages("librarian")
+library(librarian)
+
+librarian::shelf(
+  dplyr, here, mapview, sf)
+
+fk_roi_geo <- "https://github.com/marinebon/extract-app/raw/main/data/fk_roi.geojson"
+fk_sta_geo <- "https://github.com/marinebon/extract-app/raw/main/data/fk_sta.geojson"
+
+fk_roi_sf <- read_sf(fk_roi_geo)
+fk_sta_sf <- read_sf(fk_sta_geo)
+fk_sf <- bind_rows(fk_roi_sf, fk_sta_sf)
+
+mapview(fk_sf)
+```
+
+## Get ERDDAP dataset information
+
+- https://upwell.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
+- https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
+
+```{r}
+ed_info <- get_ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html")
+ed_info
+```
+
+## Extract
+
+```{r}
+# devtools::load_all()
+dir_grds <- here::here("data_tmp")
+grds <- get_ed_grds(ed_info, ed_var="sst", ply=fk_sf, dir_tif=dir_grds, date_beg = "2021-10-01")
+# Found 236 dates between 2002-06-16 and 2022-01-16
+```
+

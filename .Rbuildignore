@@ -1,2 +1,4 @@
 ^extractr\.Rproj$
 ^\.Rproj\.user$
+^data_ed$
+^data_tmp$

@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 .DS_Store
+inst/doc
+data_ed
+data_tmp
