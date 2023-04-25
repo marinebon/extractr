@@ -54,9 +54,26 @@ ed_info
 ## Extract
 
 ```{r}
-# devtools::load_all()
-dir_grds <- here::here("data_tmp")
-grds <- get_ed_grds(ed_info, ed_var="sst", ply=fk_sf, dir_tif=dir_grds, date_beg = "2021-10-01")
-# Found 236 dates between 2002-06-16 and 2022-01-16
+dir_tif <- here::here("data_tmp")
+grds <- get_ed_grds(
+  ed_info, ed_var="sst", ply=fk_sf, dir_tif=dir_tif, date_beg = "2021-10-01")
+# Found 17 dates between 2021-10-01 and 2023-03-16
 ```
+
+## Summarize
+
+```{r}
+ts_csv <- here::here("data_tmp/ts.csv")
+ts <- grds_to_ts(
+  grds, fxns = c("mean", "sd"), ts_csv, verbose = T)
+head(ts)
+```
+
+## Plot
+
+```{r}
+plot_ts(ts_csv, "mean", "sd")
+```
+
+
 

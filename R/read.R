@@ -208,6 +208,8 @@ get_ed_grds <- function(
   dir_tif   = NULL,
   del_cache = F,
   verbose   = T){
+  # ed_info = ed; date_beg = "2023-04-20"; date_end = "2023-04-24"
+  # del_cache = F; verbose   = T
 
   select = dplyr::select
 
@@ -237,7 +239,6 @@ get_ed_grds <- function(
 
   # dates on ERDDAP
   dates_all <- get_ed_dates_all(ed_info, date_beg, date_end)
-
 
   if (verbose)
     message(glue("Found {length(dates_all)} dates between {date_beg} and {date_end}."))
@@ -300,8 +301,8 @@ get_ed_grds <- function(
     dates_get <- dates_all
   }
 
-  if (verbose)
-    message(glue("Proceeding to fetch {length(dates_get)} from ERDDAP of {length(dates_all)} dates."))
+  # if (verbose)
+  #   message(glue("Proceeding to fetch {length(dates_get)} from ERDDAP of {length(dates_all)} dates."))
 
   bb <- sf::st_bbox(ply)
   # TODO: check bb's crs==4326 and within range of dataset product
@@ -311,7 +312,7 @@ get_ed_grds <- function(
       message(glue("  griddap({date}, ...)"))
 
     nc <- try(griddap(
-      x         = attr(ed_info, "datasetid"),
+      attr(ed_info, "datasetid"),
       fields    = ed_var,
       url       = ed_info$base_url,
       longitude = c(bb["xmin"], bb["xmax"]),
@@ -330,16 +331,28 @@ get_ed_grds <- function(
             latitude  = c({bb['ymin']}, {bb['ymax']}),
             time      = c('{date}', '{date}'))"))}
 
-    x <- tibble(nc$data) %>%
-      mutate(
-        # round b/c of uneven intervals
-        #   unique(tbl$lon) %>% sort() %>% diff() %>% unique() %>% as.character()
-        #     0.0499954223632812 0.0500030517578125
-        #   TODO: inform Maria/Joaquin about uneven intervals
-        lon  = round(lon, 3),
-        lat  = round(lat, 3),
-        date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
-      select(-time)
+    if (all(c("lon", "lat") %in% colnames(nc$data))){
+      x <- tibble(nc$data) %>%
+        mutate(
+          # round b/c of uneven intervals
+          #   unique(tbl$lon) %>% sort() %>% diff() %>% unique() %>% as.character()
+          #     0.0499954223632812 0.0500030517578125
+          #   TODO: inform Maria/Joaquin about uneven intervals
+          lon  = round(lon, 4),
+          lat  = round(lat, 4),
+          date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
+        select(-time)
+      sp::coordinates(x) <- ~ lon + lat
+    } else if (all(c("longitude", "latitude") %in% colnames(nc$data))){
+      x <- tibble(nc$data) %>%
+        mutate(
+          lon  = round(longitude, 4),
+          lat  = round(latitude,  4),
+          date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
+        select(-time)
+    } else {
+      stop("Expected lon/lat or longitude/latitude in ERDDAP dataset.")
+    }
     sp::coordinates(x) <- ~ lon + lat
     sp::gridded(x) <- T
     r <- raster::raster(x)
@@ -364,7 +377,6 @@ get_ed_grds <- function(
 
   is_stack <- nrow(tbl) > 1
 
-
   if (verbose)
     message(glue("Reading, masking, naming and writing (if dir_tif) to grd."))
 
@@ -388,10 +400,19 @@ get_ed_grds <- function(
     grd <- raster::mask(grd, sf::as_Spatial(ply))
     names(grd) <- glue("{ed_var}_{tbl$date}")
 
-    if (!is.null(dir_tif))
-      raster::writeRaster(
-        grd, paste0(dir_tif,"/grd"), names(grd),
-        bylayer=T, format='GTiff', overwrite = T)
+    if (!is.null(dir_tif)){
+      dir.create(dir_tif, showWarnings = F, recursive = T)
+
+      # raster::writeRaster(
+      #   grd, dir_grd, names(grd),
+      #   bylayer=T, format='GTiff', overwrite = T)
+
+      # TODO: switch from raster:: to terra::
+      #librarian::shelf(terra)
+      terra::writeRaster(
+        terra::rast(grd), glue("{dir_tif}/grd_{names(grd)}.tif"),
+        overwrite = T)
+    }
   }
 
   # raster::plot(grd); plot(ply, add = T, col = scales::alpha("blue", 0.3))
