@@ -145,13 +145,11 @@ grds_to_ts <- function(grds, fxns = c("mean", "sd"), ts_csv = NULL, verbose = F)
   # sum_ss_grds_to_ts(grds, here::here("data_ss/mbnms_global_monthly_CLASS.csv"), verbose = T)
 
   grds_dates <- tibble(
-    date = names(grds) %>%
+    lyr  = names(grds),
+    date = lyr %>%
       str_replace(".*_([0-9]{4}\\.[0-9]{2}\\.[0-9]{2})", "\\1") %>%
       str_replace_all("[.]", "-") %>%
-      as.Date()) %>%
-    tibble::rownames_to_column(var = "dimindex") %>%
-    mutate(
-      dimindex = as.integer(dimindex))
+      as.Date())
 
   if (!is.null(ts_csv)){
 
@@ -187,26 +185,16 @@ grds_to_ts <- function(grds, fxns = c("mean", "sd"), ts_csv = NULL, verbose = F)
     }
   }
 
-  if (verbose)
-    message("Converting raster stack to tibble, then summarizing by date, class.")
-  d <- tabularaster::as_tibble(grds) %>%
-    left_join(
-      grds_dates, by = "dimindex") %>%
-    group_by(date, cellvalue) %>%
-    summarize(n_cells = n(), .groups = "drop")
-
   d <- grds_dates
   for (fxn in fxns){ # fxn = fxns[1]
-   d[fxn] = terra::global(terra::rast(grds), fxn, na.rm = T)
+   d[fxn] = terra::global(grds, fxn, na.rm = T)
   }
 
   if (!is.null(ts_csv)){
     if (verbose)
       message("Writing to ts_csv.")
 
-    d |>
-      select(-dimindex) |>
-      readr::write_csv(ts_csv)
+    readr::write_csv(d, ts_csv)
   }
   d
 }

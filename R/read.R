@@ -355,7 +355,7 @@ get_ed_grds <- function(
     }
     sp::coordinates(x) <- ~ lon + lat
     sp::gridded(x) <- T
-    r <- raster::raster(x)
+    r <- raster::raster(x, layer = ed_var)
     raster::crs(r) <- 4326
     r
   }
