@@ -1,3 +1,7 @@
+# extractr 0.1.1
+
+* fix `get_ed_raster()`, `grds_to_ts()` so working with [noaa-onms/climate-dashboard](https://github.com/noaa-onms/climate-dashboard) ed_var = "CRW_SST" coral reef watch 
+
 # extractr 0.1.0
 
 * Added a `NEWS.md` file to track changes to the package.
