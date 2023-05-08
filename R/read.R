@@ -439,8 +439,11 @@ get_ed_grds <- function(
 
       # TODO: switch from raster:: to terra::
       #librarian::shelf(terra)
+      path_tif <- glue("{dir_tif}/grd_{names(grd)}.tif")
+      if (verbose)
+        message(glue("writing: {path_tif}"))
       terra::writeRaster(
-        terra::rast(grd), glue("{dir_tif}/grd_{names(grd)}.tif"),
+        terra::rast(grd), path_tif,
         overwrite = T)
     }
   }
