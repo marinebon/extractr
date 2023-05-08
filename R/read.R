@@ -320,7 +320,7 @@ get_ed_grds <- function(
       time      = c(date, date),
       fmt       = "nc"))
 
-    if ("try-error" %in% nc){
+    if ("try-error" %in% class(nc)){
       stop(glue("
         Problem fetching data from ERDDAP server using:
           rerddap::griddap(
