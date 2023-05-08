@@ -320,7 +320,7 @@ get_ed_grds <- function(
       time      = c(date, date),
       fmt       = "nc"))
 
-    if ("try-error" %in% nc){
+    if ("try-error" %in% class(nc)){
       stop(glue("
         Problem fetching data from ERDDAP server using:
           rerddap::griddap(
@@ -342,7 +342,6 @@ get_ed_grds <- function(
           lat  = round(lat, 4),
           date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
         select(-time)
-      sp::coordinates(x) <- ~ lon + lat
     } else if (all(c("longitude", "latitude") %in% colnames(nc$data))){
       x <- tibble(nc$data) %>%
         mutate(
