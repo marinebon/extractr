@@ -332,7 +332,7 @@ get_ed_grds <- function(
             time      = c('{date}', '{date}'))"))}
 
     if (all(c("lon", "lat") %in% colnames(nc$data))){
-      x <- tibble(nc$data) %>%
+      d <- tibble(nc$data) %>%
         mutate(
           # round b/c of uneven intervals
           #   unique(tbl$lon) %>% sort() %>% diff() %>% unique() %>% as.character()
@@ -340,21 +340,52 @@ get_ed_grds <- function(
           #   TODO: inform Maria/Joaquin about uneven intervals
           lon  = round(lon, 4),
           lat  = round(lat, 4),
-          date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
-        select(-time)
+          date = as.Date(time, "%Y-%m-%dT12:00:00Z"))
     } else if (all(c("longitude", "latitude") %in% colnames(nc$data))){
-      x <- tibble(nc$data) %>%
+      d <- tibble(nc$data) %>%
         mutate(
           lon  = round(longitude, 4),
           lat  = round(latitude,  4),
-          date = as.Date(time, "%Y-%m-%dT12:00:00Z")) %>%
-        select(-time)
+          # lon  = longitude,
+          # lat  = latitude,
+          date = as.Date(time, "%Y-%m-%dT12:00:00Z"))
     } else {
       stop("Expected lon/lat or longitude/latitude in ERDDAP dataset.")
     }
-    sp::coordinates(x) <- ~ lon + lat
-    sp::gridded(x) <- T
-    r <- raster::raster(x, layer = ed_var)
+    d_sp <- d |>
+      select(lon, lat, !!ed_var)
+    sp::coordinates(d_sp) <- ~ lon + lat
+    # x0 <- x
+    # sp::gridded(x) <- T
+    # r <- raster::raster(x, layer = ed_var)
+    if (ed_var == "chlorophyll"){
+      g <- sp::points2grid(d_sp, tolerance = 0.0243902)
+    } else {
+      g <- sp::points2grid(d_sp)
+    }
+    # g <- sp::points2grid(x, tolerance = 1e-05)
+    # g <- sp::points2grid(x), tolerance = 1e-05)
+    # cx <- range(diff(sort(unique(d$lon))))
+    # # dx <- range(diff(cx))
+    # cy <- range(diff(sort(unique(d$lat))))
+    # # dy <- range(diff(cy))
+    # diff(c(unique(cx), unique(cy)))
+    #
+    # diff(cx), diff(cy)
+    # tibble(
+    #   cx = cx,
+    #   cy = cy) |>
+    #   expand(cx, cy) |>
+    #   mutate(dif = )
+    #
+    # dy <- range(diff(sort(unique(d$lat))))
+    # tol <- max(max(c(dx,dy)))
+    # g <- try(sp::points2grid(x))
+    # g <- sp::points2grid(x, tolerance = tol)
+    r <- raster::raster(g)
+    idx <- raster::cellFromXY(r, sp::coordinates(d_sp))
+    r[idx] <- d_sp[[ed_var]]
+    # plot(r)
     raster::crs(r) <- 4326
     r
   }
