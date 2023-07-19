@@ -1,12 +1,18 @@
 Package: extractr
-Title: What the Package Does (One Line, Title Case)
+Title: Extract data from online dataset APIs
 Version: 0.1.1
+URL: https://marinebon.github.io/extractr,
+    https://github.com/marinebon/extractr
+BugReports: https://github.com/marinebon/extractr/issues
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Benjamin", "Best", , "ben@ecoquants.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-2686-0784"))
+Description: Extract data from online dataset APIs, such as ERDDAP, STAC, 
+  Google Earth Engine, DataOne, OBIS, etc. for specific Areas of Interest (AoIs)
+  by downloading the bounding box, clipping to area and summarizing as desired, eg
+  over a time interval (eg weekly or annual) with general statistics 
+  (eg mean and/or standard deviation).
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -25,4 +31,5 @@ Imports:
     lubridate,
     glue,
     R.utils,
-    tabularaster
+    tabularaster,
+    terra

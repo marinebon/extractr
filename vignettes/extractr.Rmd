@@ -17,8 +17,8 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(extractr) # devtools::install_local()
-# devtools::load_all()
+# library(extractr) # devtools::install_local()
+devtools::load_all()
 ```
 
 ## Get regions of interests

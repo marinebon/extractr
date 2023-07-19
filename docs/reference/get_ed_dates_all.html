@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">extractr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
@@ -31,7 +31,13 @@
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
-      </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
+      </ul><ul class="nav navbar-nav navbar-right"><li>
+  <a href="https://github.com/marinebon/extractr/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
@@ -41,7 +47,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Get list of all dates available from Seascape dataset</h1>
-    
+    <small class="dont-index">Source: <a href="https://github.com/marinebon/extractr/blob/HEAD/R/read.R" class="external-link"><code>R/read.R</code></a></small>
     <div class="hidden name"><code>get_ed_dates_all.Rd</code></div>
     </div>
 
@@ -79,7 +85,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">ed_i</span> <span class="op">&lt;-</span> <span class="fu">ed_info</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in ed_info():</span> could not find function "ed_info"</span>
 <span class="r-in"><span><span class="fu">get_ed_dates_all</span><span class="op">(</span><span class="va">ed_i</span>, <span class="st">"2003-01-01"</span>, <span class="st">"2005-01-01"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_ed_dates_all(ed_i, "2003-01-01", "2005-01-01"):</span> object 'ed_i' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(expr, envir, enclos):</span> object 'ed_i' not found</span>
 </code></pre></div>
     </div>
   </div>
@@ -90,7 +96,7 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by First Last.</p>
+  <p></p><p>Developed by Benjamin Best.</p>
 </div>
 
 <div class="pkgdown">

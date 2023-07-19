@@ -187,7 +187,7 @@ grds_to_ts <- function(grds, fxns = c("mean", "sd"), ts_csv = NULL, verbose = F)
 
   d <- grds_dates
   for (fxn in fxns){ # fxn = fxns[1]
-   d[fxn] = terra::global(grds, fxn, na.rm = T)
+   d[fxn] = terra::global( terra::rast(grds), fxn, na.rm = T)
   }
 
   if (!is.null(ts_csv)){
