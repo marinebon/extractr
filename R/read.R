@@ -312,7 +312,7 @@ get_ed_grds <- function(
       message(glue("  griddap({date}, ...)"))
 
     nc <- try(griddap(
-      attr(ed_info, "datasetid"),
+      datasetx  = attr(ed_info, "datasetid"),
       fields    = ed_var,
       url       = ed_info$base_url,
       longitude = c(bb["xmin"], bb["xmax"]),
@@ -324,7 +324,7 @@ get_ed_grds <- function(
       stop(glue("
         Problem fetching data from ERDDAP server using:
           rerddap::griddap(
-            x         = '{attr(ed_info, 'datasetid')}',
+            datasetx  = '{attr(ed_info, 'datasetid')}',
             fields    = '{ed_var}',
             url       = '{ed_info$base_url}',
             longitude = c({bb['xmin']}, {bb['xmax']}),
