@@ -317,7 +317,7 @@ get_ed_grds <- function(
       url       = ed_info$base_url,
       longitude = c(bb["xmin"], bb["xmax"]),
       latitude  = c(bb["ymin"], bb["ymax"]),
-      time      = c(date, date),
+      time      = c(date, date) |> as.character(),
       fmt       = "nc"))
 
     if ("try-error" %in% class(nc)){
