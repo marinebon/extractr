@@ -2,7 +2,7 @@
 #'
 #' The purpose of this function is to generate time series plots of ERRDAP data.
 #'
-#' @param ts_csv file path to timeseries table as comma-separated value (CSV) (required)
+#' @param ts file path to timeseries table as comma-separated value (CSV) or data frame (required)
 #' @param fld_avg field name containing value average; default = `"mean"`
 #' @param fld_sd  field name containing standard deviation average (optional); default = `NULL`
 #' @param fld_date field name containing date (required); default = `"date"`
@@ -18,17 +18,23 @@
 #' @importFrom xts xts
 #' @export
 #' @examples \dontrun{
-#' ts_csv <- here::here("data_tmp/ts.csv")
-#' plot_ts(ts_csv, main = "SST")
+#' ts <- here::here("data_tmp/ts.csv")
+#' plot_ts(ts, main = "SST")
 #' }
 #'
 plot_ts <- function(
-    ts_csv, fld_avg = "mean", fld_sd = NULL, fld_date = "date",
+    ts, fld_avg = "mean", fld_sd = NULL, fld_date = "date",
     color = "red", label = "Temperature (°C)", ...){
   # fld_avg = "mean"; fld_sd = "sd"; fld_date = "date"; color = "red"; label = "Temperature (°C)"
 
-  # Read in the csv file
-  d <- readr::read_csv(ts_csv, show_col_types = F)
+  if (!is.character(ts) & !is.data.frame(ts))
+    stop("ts argument needs to be either a path to csv or a data frame")
+
+  # Read in the timeseries
+  if (is.character(ts))
+    d <- readr::read_csv(ts, show_col_types = F)
+  if (is.data.frame(ts))
+    d <- ts
 
   stopifnot(fld_date %in% colnames(d))
   stopifnot(fld_avg %in% colnames(d))
