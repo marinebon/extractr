@@ -1,3 +1,7 @@
+# extractr 0.1.3
+
+* Modified `plot_ts()` so first argument could either be path to CSV or data frame.
+
 # extractr 0.1.2
 
 * Fixed arguments in `rerddap::griddap()` for rerddap version `1.0.3`:  `x` to `datasetx`;  `time` with `as.character()`. Fixed article outputs.

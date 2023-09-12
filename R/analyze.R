@@ -189,7 +189,7 @@ grds_to_ts <- function(grds, fxns = c("mean", "sd"), ts_csv = NULL, verbose = F)
 
   get_lyr_fxn <- function(lyr){
     # message(glue("{lyr} - {fxn}"))
-    terra::global( grds[[lyr]], fxn, na.rm = T)[1,1]
+    terra::global( terra::rast(grds[[lyr]]), fxn, na.rm = T)[1,1]
   }
 
   for (fxn in fxns){ # fxn = fxns[1]
