@@ -21,7 +21,8 @@ library(extractr) # devtools::install_local(force = T) # devtools::load_all()
 ```
 
 ## Get regions of interests
-
+Load region-of-interest (RoI) geojson files.
+These RoIs are used to define the area that we will extract data for.
 ```{r}
 if (!require("librarian"))
   install.packages("librarian")
@@ -29,37 +30,39 @@ if (!require("librarian"))
 librarian::shelf(
   dplyr, here, mapview, sf)
 
-fk_roi_geo <- "https://github.com/marinebon/extract-app/raw/main/data/fk_roi.geojson"
-fk_sta_geo <- "https://github.com/marinebon/extract-app/raw/main/data/fk_sta.geojson"
+fk_roi_sf <- read_sf("https://github.com/marinebon/extract-app/raw/main/data/fk_roi.geojson")
+fk_sta_sf <- read_sf("https://github.com/marinebon/extract-app/raw/main/data/fk_sta.geojson")
 
-fk_roi_sf <- read_sf(fk_roi_geo)
-fk_sta_sf <- read_sf(fk_sta_geo)
 fk_sf <- bind_rows(fk_roi_sf, fk_sta_sf)
 
 mapview(fk_sf)
 ```
 
 ## Get ERDDAP dataset information
-
-- https://upwell.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
-- https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
-
 ```{r}
 ed_info <- get_ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html")
 ed_info
 ```
 
-## Extract
+Additional ERDDAP datasets of interest:
+- https://upwell.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
+- https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
 
+## Extract
+Extract a time-series for a given dataset and RoI
 ```{r}
-dir_tif <- here::here("data_tmp")
+dir_tif <- here::here("data_tmp")  # directory for storing .tif files
 grds <- get_ed_grds(
-  ed_info, ed_var="sst", ply=fk_sf, dir_tif=dir_tif, date_beg = "2021-10-01")
-# Found 17 dates between 2021-10-01 and 2023-03-16
+  ed_info, 
+  ed_var="sst",  # variable name from the ERDDAP 
+  ply=fk_sf,  # polygon of the RoI
+  dir_tif=dir_tif, 
+  date_beg = "2021-10-01"  # start of time-series
+  # date_end defaults to the current date
+)
 ```
 
-## Summarize
-
+## Summarize the Extracted Time Series
 ```{r}
 ts_csv <- here::here("data_tmp/ts.csv")
 ts <- grds_to_ts(
@@ -67,11 +70,7 @@ ts <- grds_to_ts(
 head(ts)
 ```
 
-## Plot
-
+## Plot the Extracted Time Series
 ```{r}
 plot_ts(ts_csv, "mean", "sd")
 ```
-
-
-
