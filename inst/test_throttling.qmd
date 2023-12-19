@@ -1,0 +1,82 @@
+---
+title: "test_throttling"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+## Polygon: MBNMS
+
+```{r}
+librarian::shelf(
+  devtools, dplyr, mapview, noaa-onms/onmsR, sf, terra)
+devtools::load_all() # load extractr functions locally
+
+ply <- onmsR::sanctuaries |> 
+  filter(nms == "MBNMS")
+
+mapView(ply)
+```
+
+
+## ERDDAP dataset: ECCO2 salinity `x,y,z,t`
+
+* [ERDDAP - ECCO ECCO2 cube92 salt - Data Access Form](https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html)
+
+```{r}
+ed_url        <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
+ed            <- extractr::get_ed_info(ed_url)
+(ed_date_range <- extractr::get_ed_dates(ed)) # "1992-01-02" "2023-04-28"
+ed_dates      <- extractr::get_ed_dates_all(
+  ed, min(ed_date_range), max(ed_date_range))
+
+# get geospatial attributes
+a <- ed$alldata$NC_GLOBAL |>
+  filter(
+    attribute_name |> str_starts("geospatial_"),
+    data_type == "double") |>
+  select(attribute_name, value)
+g <- setNames(as.numeric(a$value), a$attribute_name) |> as.list()
+lon_half <- g$geospatial_lon_resolution/2
+lat_half <- g$geospatial_lat_resolution/2
+
+# setup raster with potentially different xres() and yres()
+r_na <- rast(
+  xmin       = g$geospatial_lon_min - lon_half,
+  xmax       = g$geospatial_lon_max + lon_half,
+  ymin       = g$geospatial_lat_min - lat_half,
+  ymax       = g$geospatial_lat_max + lat_half,
+  resolution = c(
+    g$geospatial_lon_resolution,
+    g$geospatial_lat_resolution),
+  crs = "epsg:4326")
+
+# a) either rotate raster to -180, 180
+if (ext(r_na)[2] > 180)
+  r_na  <- rotate(r_na, 180)
+# b) or shift vector to 0, 360
+# st_shift_longitude(ply)
+
+r_idx <- r_na
+values(r_idx) <- 1:ncell(r_idx)
+
+stopifnot(st_crs(ply) == st_crs(4326))
+
+# a) for only pixels with centroids inside polygon
+idx_r_ply <- extract(r_idx, ply, ID=F)
+
+# TODO: explore args cells, xy
+idx_r_ply <- extract(r_idx, ply, ID=F, exact=T)[,1]
+r_ply <- r_na
+r_ply[idx_r_ply] <- idx_r_ply
+r_ply <- trim(r_ply)
+
+# a) for full width of grid cells
+ext(r_ply)
+
+# b) for centroids of pixels
+apply(xyFromCell(r_idx, idx_r_ply[,1]), 2, range)
+
+mapView(ply) + 
+  mapView(r_ply)
+```
