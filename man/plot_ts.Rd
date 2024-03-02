@@ -5,7 +5,7 @@
 \title{Plot time series}
 \usage{
 plot_ts(
-  ts_csv,
+  ts,
   fld_avg = "mean",
   fld_sd = NULL,
   fld_date = "date",
@@ -15,7 +15,7 @@ plot_ts(
 )
 }
 \arguments{
-\item{ts_csv}{file path to timeseries table as comma-separated value (CSV) (required)}
+\item{ts}{file path to timeseries table as comma-separated value (CSV) or data frame (required)}
 
 \item{fld_avg}{field name containing value average; default = \code{"mean"}}
 
@@ -37,8 +37,8 @@ The purpose of this function is to generate time series plots of ERRDAP data.
 }
 \examples{
 \dontrun{
-ts_csv <- here::here("data_tmp/ts.csv")
-plot_ts(ts_csv, main = "SST")
+ts <- here::here("data_tmp/ts.csv")
+plot_ts(ts, main = "SST")
 }
 
 }

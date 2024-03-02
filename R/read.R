@@ -540,3 +540,37 @@ get_ed_dates_all <- function(ed_info, date_beg, date_end){
     as.Date()
 }
 
+#' Get list of all dates available from Seascape dataset
+#'
+#' Given a SeaScape dataset info object and date range, return a vector of all available dates.
+#'
+#' @param ed_info ERDDAP info object on SeaScape dataset, as returned by \code{\link{get_ed_info}})
+#' @param var variable to extract
+#'
+#' @return vector of values for given variable
+#'
+#' @importFrom glue glue
+#' @importFrom readr read_csv
+#' @importFrom magrittr %>%
+#' @importFrom dplyr pull
+#' @export
+#' @concept read
+#'
+#' @examples
+#' ed_i <- get_ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
+#' get_ed_vals_all(ed_i, "LEV")
+get_ed_vals_all <- function(ed_info, var){
+  # ed_info = get_ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
+  # var     = "LEV"
+
+  ed_dataset = attr(ed_info, "datasetid")
+
+  t_csv <- glue("{ed_info$base_url}/griddap/{ed_dataset}.csvp?{var}")
+  d_t <- try(read_csv(t_csv, show_col_types = F))
+  if ("try-error" %in% class(d_t))
+    stop(glue("Problem fetching dates from ERDDAP with: {t_csv}"))
+
+  d_t  |>
+    pull()
+}
+

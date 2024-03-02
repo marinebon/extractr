@@ -13,7 +13,10 @@ librarian::shelf(
 devtools::load_all() # load extractr functions locally
 
 ply <- onmsR::sanctuaries |> 
-  filter(nms == "MBNMS")
+  filter(nms == "MBNMS") |>
+  select(spatial) |> 
+  unnest(spatial) |> 
+  st_as_sf()
 
 mapView(ply)
 ```
@@ -24,11 +27,19 @@ mapView(ply)
 * [ERDDAP - ECCO ECCO2 cube92 salt - Data Access Form](https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html)
 
 ```{r}
-ed_url        <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
-ed            <- extractr::get_ed_info(ed_url)
+var   <- "salt"
+var_z <- "LEV"
+n_max <- 10000
+
+ed_url         <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
+ed             <- extractr::get_ed_info(ed_url)
 (ed_date_range <- extractr::get_ed_dates(ed)) # "1992-01-02" "2023-04-28"
-ed_dates      <- extractr::get_ed_dates_all(
+ed_dates       <- extractr::get_ed_dates_all(
   ed, min(ed_date_range), max(ed_date_range))
+
+
+if (!is.null(var_z))
+  z <- extractr::get_ed_vals_all(ed, "LEV")
 
 # get geospatial attributes
 a <- ed$alldata$NC_GLOBAL |>
@@ -52,30 +63,152 @@ r_na <- rast(
   crs = "epsg:4326")
 
 # a) either rotate raster to -180, 180
-if (ext(r_na)[2] > 180)
-  r_na  <- rotate(r_na, 180)
+if (ext(r_na)[2] > 180){
+#   r_na  <- terra::rotate(r_na, 180)
 # b) or shift vector to 0, 360
-# st_shift_longitude(ply)
+  ply <- st_shift_longitude(ply) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
+}
 
 r_idx <- r_na
-values(r_idx) <- 1:ncell(r_idx)
-
+values(r_idx) <- 1:ncell(r_idx) # ncell: 1,036,800 # mapView(r_idx)
 stopifnot(st_crs(ply) == st_crs(4326))
 
 # a) for only pixels with centroids inside polygon
-idx_r_ply <- extract(r_idx, ply, ID=F)
+# get all pixels that touch polygon, esp places like Monitor
+# idx_r_ply_0 <- terra::extract(r_idx, ply, ID=F)           #  n=28
+# idx_r_ply <- terra::extract(r_idx, ply, ID=F, weights=T)  #  n=44
+d_r_ply <- terra::extract(r_idx, ply, ID=F, exact=T)        #  n=47
 
-# TODO: explore args cells, xy
-idx_r_ply <- extract(r_idx, ply, ID=F, exact=T)[,1]
-r_ply <- r_na
-r_ply[idx_r_ply] <- idx_r_ply
+# apply area-weighted avg using range(idx_r_ply$fraction)
+r_ply              <- r_na
+r_ply[d_r_ply[,1]] <- d_r_ply[,1]
 r_ply <- trim(r_ply)
 
+# mapView(ply) + 
+#   mapView(r_ply)
+# TODO: mask anything touching land, then apply area-weighted avg, since only small portion might be oceanic
+
 # a) for full width of grid cells
-ext(r_ply)
+b <- ext(r_ply) |> as.vector() # dimensions: 10, 9, 1  (nrow, ncol, nlyr)
+# names(b) # "xmin" "xmax" "ymin" "ymax"
 
 # b) for centroids of pixels
-apply(xyFromCell(r_idx, idx_r_ply[,1]), 2, range)
+# apply(xyFromCell(r_idx, d_r_ply[,1]), 2, range)
+
+# paginate through time given threshold of fetch
+n_cells <- ncell(r_ply)      #    90
+n_z     <- length(z)         #    50
+
+times <- extractr::get_ed_vals_all(ed, "time")
+n_t     <- length(times)  # 3,814
+
+# x * y * z * t
+# n_cells * n_z * n_t   # 17,163,000
+n_xyz <- n_cells * n_z  #      4,500
+
+n_max <- 1000000
+stopifnot(n_max >= n_xyz)
+n_t_per_req <- n_max %/%  n_xyz # 1,716
+
+d_csv   <- here("data_tmp/test_throttle.csv") # TODO: arg
+req_csv <- here("data_tmp/test_throttle_1req.csv") # TODO: as tempfile
+
+i_t <- 1 # DEBUG: i_t <- 41
+while (i_t <= n_t) {
+  
+  # get time slice end
+  i_t_end <- min(c(i_t + n_t_per_req - 1, n_t))
+  # dates   <- ed_dates[c(i_t, i_t_end)] |> as.character()
+  t_req <- times[c(i_t, i_t_end)] |> 
+    format_ISO8601(usetz="Z")
+  # TODO: slice if not starting at i_t=1
+
+  # TODO: skip slices already fetched
+  if (file.exists(d_csv)){
+    d <- read_csv(d_csv, show_col_types=F)
+    # class(d$time)
+    
+    if (all(as_datetime(t_req) %in% as_datetime(d$time))){
+      message(glue("Skipping {i_t}:{i_t_end} ({paste(times[c(i_t, i_t_end)], collapse = ':')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+      # iterate to next time slice
+      i_t <- i_t_end + 1
+      next
+    }
+  } else {
+    d <- tibble()
+  }
+  message(glue("Fetching time slice {i_t}:{i_t_end} ({paste(times[c(i_t, i_t_end)], collapse = ':')}) of {n_t} ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+  
+  # n_max <- 1000000 # 1,000,000
+  # Fetching time slice 1:222 (1992-01-02:1993-10-26) of 3814     ~ 14:59:38 PST
+  # Fetching time slice 223:444 (1993-10-29:1995-08-23) of 3814   ~ 15:21:08 PST
+  # Fetching time slice 445:666 (1995-08-26:1997-06-19) of 3814   ~ 15:44:19 PST            # Fetching time slice 667:888 (1997-06-22:1999-04-16) of 3814   ~ 16:03:40 PST            # Fetching time slice 889:1110 (1999-04-19:2001-02-10) of 3814  ~ 16:26:00 PST            # Fetching time slice 1111:1332 (2001-02-13:2002-12-08) of 3814 ~ 16:47:05 PST            # Fetching time slice 1333:1554 (2002-12-11:2004-10-04) of 3814 ~ 17:15:06 PST            # Fetching time slice 1555:1776 (2004-10-07:2006-08-01) of 3814 ~ 17:38:31 PST  
+  
+  # TODO: get time (not date) slices; 
+  # dates <- ed_dates[c(i_t, i_t_end)]; |> as.POSIXct()
+  # [1] "time bounds are out of range"
+  # [1] "You gave: "
+  # [1] "1992-01-02" "1992-01-05"
+  # [1] "Dataset times are: "
+  # [1] "1992-01-02T00:00:00Z" "2023-04-28T00:00:00Z"
+  
+  nc_retry <- T
+  nc_n_try <- 0
+  while (nc_retry){
+    # message("  griddap()")
+    nc <- try(rerddap::griddap(
+      datasetx  = attr(ed_info, "datasetid"),
+      fields    = var,
+      url       = ed_info$base_url,
+      LEV       = c(min(z), max(z)),
+      longitude = c(b["xmin"], b["xmax"]),
+      latitude  = c(b["ymin"], b["ymax"]),
+      time      = t_req,
+      fmt       = "nc"))
+    
+    if (inherits(nc, "try-error")){
+      message("  griddap() error, retrying after deleting cache...")
+      rerddap::cache_delete_all()
+    } else {
+      nc_retry <- F
+    }
+    
+    nc_n_try <- nc_n_try + 1
+    if (nc_n_try > 2)
+      stop("Failed to fetch nc file")
+  }
+  # Error in R_nc4_open: NetCDF: Unknown file format
+  # names(nc) # "summary" "data"
+  
+  # write to csv
+  nc$data |> 
+    mutate(across(where(is.array), as.vector)) |> 
+    write_csv(req_csv)
+  d |>
+    bind_rows(
+      read_csv(req_csv, show_col_types=F)) |>
+    write_csv(d_csv)
+  
+  # terra::writeCDF(nc, "test.nc")
+  # gdalcubes::write_ncdf(nc, "tmp.nc")
+  
+  # iterate to next time slice
+  i_t <- i_t_end + 1
+}
+
+i <- 1
+z_i <- z[i]
+t_i <- times[i] |> format_ISO8601(usetz="Z")
+r <- nc$data |> 
+  filter(
+    LEV  == z_i,
+    time == t_i) |> 
+  tibble() |> 
+  select(longitude, latitude , salt) |> 
+  rast(type="xyz", crs="EPSG:4326")
+# mapView(r)
+
+# TODO: result as averaged across z or ... return stack of multiple z's?
 
 mapView(ply) + 
   mapView(r_ply)
