@@ -9,135 +9,208 @@ editor_options:
 
 ```{r}
 librarian::shelf(
-  devtools, dplyr, mapview, noaa-onms/onmsR, sf, terra)
+  devtools, dplyr, mapview, sf, terra)
 devtools::load_all() # load extractr functions locally
 
-ply <- onmsR::sanctuaries |> 
-  filter(nms == "MBNMS") |>
-  select(spatial) |> 
-  unnest(spatial) |> 
-  st_as_sf()
+library(dplyr)
+library(sf)
+ply_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
+
+ply <- sf::read_sf(ply_geo) |> 
+  dplyr::filter(nms == "FKNMS")
 
 mapView(ply)
 ```
 
-
 ## ERDDAP dataset: ECCO2 salinity `x,y,z,t`
 
-* [ERDDAP - ECCO ECCO2 cube92 salt - Data Access Form](https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html)
+* [ERDDAP - ECCO ECCO2 cube92 salt - Data Access Form](https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html): disappeared!
+
+  - [ERDDAP - Search: "ECCO2"](https://apdrc.soest.hawaii.edu/erddap/search/index.html?page=1&itemsPerPage=1000&searchFor=ECCO2)
+    - [ERDDAP - ECCO ECCO2 lle.nb.01 saltanom - Data Access Form](https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_0596_1266_58f7.html)
+    
+- atlernative: [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
+    
+Two types of output are of interest to indicator development and products for analysis and visualization that could use different functions:
+
+1. Rasters clipped to place, and possibly summarized over time.
+
+  - `ed_to_rast(ed_url, ply, agg_time_period = NULL, agg_time_function = NULL)`\
+     Extract ERDDAP dataset (`ed`, like `rerddap::ed_search()`) to raster (`terra::rast`)
+     
+     - `agg_time_period` in [ISO_8601](https://en.wikipedia.org/wiki/ISO_8601#Durations) with a start (and end or undefined) and duration, eg `R/P3M` for a period of 3 months repeated and `R/1985-04-12/../P3M` has it start on `1985-04-12` with an unbound (`..`) end. For implementation, see  [`lubridate::format_ISO8601()`](https://lubridate.tidyverse.org/reference/format_ISO8601.html),  [`lubridate::interval()`](https://lubridate.tidyverse.org/reference/interval.html#:~:text=interval(%222008%2D05%2D11/P2H30M%22)). ?: Leap year/date concerns / 28-31 days in a month.
+
+2. Tables summarizing rasters by place.
+
 
 ```{r}
-var   <- "salt"
-var_z <- "LEV"
-n_max <- 10000
+devtools::load_all()
 
-ed_url         <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
-ed             <- extractr::get_ed_info(ed_url)
-(ed_date_range <- extractr::get_ed_dates(ed)) # "1992-01-02" "2023-04-28"
-ed_dates       <- extractr::get_ed_dates_all(
-  ed, min(ed_date_range), max(ed_date_range))
+# arguments in
+# var    <- "salt"
+# var_z  <- "LEV"
+n_max  <- 10000
+# ed_url <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_0596_1266_58f7.html"
+ed_url <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
 
+# TODO: aoi or bbox
 
-if (!is.null(var_z))
-  z <- extractr::get_ed_vals_all(ed, "LEV")
+aoi <- c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5) |> 
+  st_bbox() |> 
+  st_as_sfc() |> 
+  st_as_sf(crs = "epsg:4326")
 
-# get geospatial attributes
-a <- ed$alldata$NC_GLOBAL |>
-  filter(
-    attribute_name |> str_starts("geospatial_"),
-    data_type == "double") |>
-  select(attribute_name, value)
-g <- setNames(as.numeric(a$value), a$attribute_name) |> as.list()
-lon_half <- g$geospatial_lon_resolution/2
-lat_half <- g$geospatial_lat_resolution/2
+# TODO: check assumption of aoi Geographic CRS
+stopifnot(st_crs(aoi) == st_crs(4326))
 
-# setup raster with potentially different xres() and yres()
-r_na <- rast(
-  xmin       = g$geospatial_lon_min - lon_half,
-  xmax       = g$geospatial_lon_max + lon_half,
-  ymin       = g$geospatial_lat_min - lat_half,
-  ymax       = g$geospatial_lat_max + lat_half,
-  resolution = c(
-    g$geospatial_lon_resolution,
-    g$geospatial_lat_resolution),
-  crs = "epsg:4326")
+ed  <- extractr::get_ed_info(ed_url)
+# (ed_date_range <- extractr::get_ed_dates(ed)) # "1992-01-02" "2023-04-28"
 
+(vars <- ed$variables)
+#   variable_name data_type actual_range
+# 1          salt     float
+#
+#      variable_name data_type actual_range
+# 1     analysed_sst    double             
+# 2 sea_ice_fraction    double
+var <- "analysed_sst" # TODO: arg in
+# listviewer::jsonedit(ed$alldata)
+
+(dim_names <- names(ed$alldata) |> setdiff(c("NC_GLOBAL", vars$variable_name)))
+# [1] "time"      "LEV"       "latitude"  "longitude"
+#
+# [1] "time"      "latitude"  "longitude"
+
+# for now require dimensions: longitude, latitude, time 
+dims_xyt <- c("longitude","latitude","time")
+stopifnot(all(dims_xyt %in% dim_names))
+# TODO: consider alternative names, eg lon / lat / date
+
+dims <- sapply(dim_names, get_ed_dim, ed = ed)
+
+# TODO: check for irregular grid and use terra::rasterize to regularize grid values
+# [How to make RASTER from irregular point data without interpolation](https://gis.stackexchange.com/questions/79062/how-to-make-raster-from-irregular-point-data-without-interpolation)
+# diff(dims$longitude) |> range() # 0.125  0.125
+# diff(dims$latitude) |> range()  # 0.1082 0.1250
+# r_na <- expand.grid(
+#   longitude = dims$longitude,
+#   latitude  = dims$latitude,
+#   value     = NA) |> 
+#   rast(type="xyz")
+
+r_na <- expand.grid(
+  longitude = dims$longitude,
+  latitude  = dims$latitude,
+  value     = NA) |>
+  terra::rast(
+    type = "xyz", 
+    crs  = "epsg:4326")
+# TODO: check assumption of grid Geographic CRS
+
+if (terra::ext(r_na)[2] > 180){
 # a) either rotate raster to -180, 180
-if (ext(r_na)[2] > 180){
 #   r_na  <- terra::rotate(r_na, 180)
 # b) or shift vector to 0, 360
-  ply <- st_shift_longitude(ply) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
+  aoi <- st_shift_longitude(aoi) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
 }
 
 r_idx <- r_na
-values(r_idx) <- 1:ncell(r_idx) # ncell: 1,036,800 # mapView(r_idx)
-stopifnot(st_crs(ply) == st_crs(4326))
+terra::values(r_idx) <- 1:terra::ncell(r_idx) # ncell: 1,036,800 # mapView(r_idx)
 
+bb <- st_bbox(aoi)
+r_bb <- r_idx |> 
+  terra::crop(bb) |> 
+  terra::trim()
+n_r <- terra::ncell(r_bb)
+
+dims_other <- setdiff(names(dims), dims_xyt)
+n_dims_other <- ifelse(
+  length(dims_other) > 0, 
+  sapply(dims[dims_other], length) |> prod(),
+  1) # set to unity for multiplying with n_r
+
+# n_per_t: number of values per individual time slice
+n_per_t <- n_r * n_dims_other
+
+# * OLD ----
 # a) for only pixels with centroids inside polygon
 # get all pixels that touch polygon, esp places like Monitor
 # idx_r_ply_0 <- terra::extract(r_idx, ply, ID=F)           #  n=28
 # idx_r_ply <- terra::extract(r_idx, ply, ID=F, weights=T)  #  n=44
-d_r_ply <- terra::extract(r_idx, ply, ID=F, exact=T)        #  n=47
+d_r_aoi <- terra::extract(r_idx, aoi, ID=F, exact=T)        #  n=47
 
 # apply area-weighted avg using range(idx_r_ply$fraction)
-r_ply              <- r_na
-r_ply[d_r_ply[,1]] <- d_r_ply[,1]
-r_ply <- trim(r_ply)
+r_aoi              <- r_na
+r_aoi[d_r_aoi[,1]] <- d_r_aoi[,1]
+r_aoi <- terra::trim(r_aoi)
 
-# mapView(ply) + 
-#   mapView(r_ply)
-# TODO: mask anything touching land, then apply area-weighted avg, since only small portion might be oceanic
+# mapView(aoi) +
+#   mapView(r_aoi)
+# TODO: mask anything touching land, then apaoi area-weighted avg, since only small portion might be oceanic
 
 # a) for full width of grid cells
-b <- ext(r_ply) |> as.vector() # dimensions: 10, 9, 1  (nrow, ncol, nlyr)
+b <- terra::ext(r_aoi) |> as.vector() # dimensions: 10, 9, 1  (nrow, ncol, nlyr)
 # names(b) # "xmin" "xmax" "ymin" "ymax"
 
 # b) for centroids of pixels
 # apply(xyFromCell(r_idx, d_r_ply[,1]), 2, range)
 
 # paginate through time given threshold of fetch
-n_cells <- ncell(r_ply)      #    90
-n_z     <- length(z)         #    50
-
-times <- extractr::get_ed_vals_all(ed, "time")
-n_t     <- length(times)  # 3,814
+n_cells <- terra::ncell(r_aoi)  #    90
+n_z     <- length(zs)           #    50
+n_t     <- length(ts)           # 3,814
 
 # x * y * z * t
 # n_cells * n_z * n_t   # 17,163,000
 n_xyz <- n_cells * n_z  #      4,500
+# * OLD-END ----
 
-n_max <- 1000000
-stopifnot(n_max >= n_xyz)
-n_t_per_req <- n_max %/%  n_xyz # 1,716
+# n_max <- 1000000 # arg in: 1,000,000
+n_max <- 10000   # arg in:    10,000
+# stopifnot(n_max >= n_xyz)
+stopifnot(n_max >= n_per_t)
 
-d_csv   <- here("data_tmp/test_throttle.csv") # TODO: arg
-req_csv <- here("data_tmp/test_throttle_1req.csv") # TODO: as tempfile
+# n_t_per_req: number of time slices per request
+n_t_per_req <- n_max %/% n_per_t
+n_t         <- length(dims$time)
+n_reqs      <- ceiling(n_t / n_t_per_req)
 
-i_t <- 1 # DEBUG: i_t <- 41
-while (i_t <= n_t) {
+message(glue("For total dataset download: {n_reqs} requests, {n_t_per_req} time slices each"))
+# TODO: get subset based on args in, eg time subset
+
+dir_tif <- here("data_tmp")
+# d_csv   <- here("data_tmp/test_throttle.csv")      # TODO: arg
+d_csv   <- here("data_tmp/tbep_sst.csv")      # TODO: arg
+# unlink(d_csv)
+# req_csv <- here("data_tmp/test_throttle_1req.csv") # TODO: as tempfile
+
+i_req <- 1
+while (i_req <= n_reqs) {  # i_req = 2
+  
+  i_t_beg <- (i_req - 1) * n_t_per_req + 1
   
   # get time slice end
-  i_t_end <- min(c(i_t + n_t_per_req - 1, n_t))
+  i_t_end <- min(c(i_t_beg + n_t_per_req - 1, n_t))
   # dates   <- ed_dates[c(i_t, i_t_end)] |> as.character()
-  t_req <- times[c(i_t, i_t_end)] |> 
+  t_req <- dims$time[c(i_t_beg, i_t_end)] |> 
     format_ISO8601(usetz="Z")
   # TODO: slice if not starting at i_t=1
 
-  # TODO: skip slices already fetched
+  # TODO: skip slices already fetched based on tif / csv outputs
   if (file.exists(d_csv)){
     d <- read_csv(d_csv, show_col_types=F)
     # class(d$time)
     
     if (all(as_datetime(t_req) %in% as_datetime(d$time))){
-      message(glue("Skipping {i_t}:{i_t_end} ({paste(times[c(i_t, i_t_end)], collapse = ':')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+      message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ':')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
       # iterate to next time slice
-      i_t <- i_t_end + 1
+      i_t_beg <- i_t_end + 1
       next
     }
   } else {
     d <- tibble()
   }
-  message(glue("Fetching time slice {i_t}:{i_t_end} ({paste(times[c(i_t, i_t_end)], collapse = ':')}) of {n_t} ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+  message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
   
   # n_max <- 1000000 # 1,000,000
   # Fetching time slice 1:222 (1992-01-02:1993-10-26) of 3814     ~ 14:59:38 PST
@@ -152,23 +225,103 @@ while (i_t <= n_t) {
   # [1] "Dataset times are: "
   # [1] "1992-01-02T00:00:00Z" "2023-04-28T00:00:00Z"
   
+  dir_nc <- glue("{dir_tif}/{var}_nc")
+  r_tif  <- glue("{dir_tif}/{var}.tif")
   nc_retry <- T
   nc_n_try <- 0
   while (nc_retry){
     # message("  griddap()")
-    nc <- try(rerddap::griddap(
-      datasetx  = attr(ed_info, "datasetid"),
+    res <- try(rerddap::griddap(
+      datasetx  = attr(ed, "datasetid"),
+      url       = ed$base_url,
       fields    = var,
-      url       = ed_info$base_url,
-      LEV       = c(min(z), max(z)),
-      longitude = c(b["xmin"], b["xmax"]),
-      latitude  = c(b["ymin"], b["ymax"]),
+      # LEV       = c(min(zs), max(zs)),
+      longitude = c(bb["xmin"], bb["xmax"]),
+      latitude  = c(bb["ymin"], bb["ymax"]),
       time      = t_req,
-      fmt       = "nc"))
+      fmt       = "nc",
+      store     = rerddap::disk(path = dir_nc) ))
     
-    if (inherits(nc, "try-error")){
+    # librarian::shelf(
+    #   ncmeta, stars)
+    ncs <- list.files(
+      dir_nc, ".*\\.nc$", recursive = T, full.names = T)
+    # s <- stars::read_stars(ncs, crs = "epsg:4326")
+    # st_crs(s) <- "epsg:4326"
+    # r <- s |> 
+    # r <- stars::read_stars(ncs) |> terra::rast()
+    r <- terra::rast(ncs)
+    # TODO: handle projections outside "epsg:4326"
+    stopifnot(crs(r, proj=T) == "+proj=longlat +datum=WGS84 +no_defs")
+    r <- r |> 
+      terra::mask(aoi) # |> 
+      # terra::trim() 
+      # TODO: add trim at end of iterations
+    
+    # TODO: handle NetCDFs without time stamp
+    stopifnot(all(class(time(r)) %in% c("POSIXct","POSIXt")))
+
+    # get times for layer names and trim to date if all equal hours-minutes-seconds 
+    #   leave full date-time for times(r) to referece exact ERDDAP time slice
+    v_hms <- hour(time(r)) + minute(time(r))/60 + second(time(r))/3600
+    is_hms_eq <- var(v_hms) == 0
+    if (is_hms_eq){
+      times <- as.Date(time(r)) |> as.character()
+    } else {
+      times <- time(r) |> str_replace_all(" ", "|") |> class()
+    }
+
+    lyrs <- glue("{var}_{times}")
+    stopifnot(length(dims_other) == 0)
+    # TODO: include other dims (eg depth) in lyr names
+    names(r) <- lyrs
+    # plot(r[[1]], title(lay))
+    
+    terra::writeRaster(
+      r, r_tif, overwrite=T)
+    # gdal=c("COMPRESS=DEFLATE", "GDAL_PAM_ENABLED=FALSE")) 
+    
+    
+    # librarian::shelf(
+    #   tbep-tech/tbeptools)
+    aoi <- tbeptools::tbsegshed
+    
+    zonal_fun <- "mean"
+    d <- zonal(
+      r, terra::vect(aoi), fun=zonal_fun, exact = T, na.rm=T, 
+        as.polygons = T) |> 
+      st_as_sf() |> 
+      st_drop_geometry() |> 
+      tidyr::pivot_longer(
+        cols = -any_of(names(aoi)), names_to = "lyr", values_to = "val") |>
+      mutate(
+        var  = var,
+        time = str_replace(lyr, glue("{var}_([^_\\\\s]+)"), "\\1") |> 
+          str_replace_all(fixed("|"), " "))
+    di_csv <- tempfile(fileext = ".csv")
+    write_csv(d, di_csv)
+    d <- read_csv(di_csv, show_col_types = F)
+    
+
+    # TODO: append to tif if exists
+    # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
+    # TODO: +args dir_tif: infers keep_tif, otherwise use tmpdir
+    # TODO: +args fld_aoi: report in csv by fld  (otherwise st_union)
+    
+    
+    names(rast(r_tif))
+    time(r)
+    has.time(r)
+    datatype(r)
+    
+      # datatype = "FLT4S", filetype = "GTiff", 
+      # gdal = c("COMPRESS=DEFLATE"), overwrite = T)
+    
+    if (inherits(res, "try-error")){
       message("  griddap() error, retrying after deleting cache...")
       rerddap::cache_delete_all()
+      # TODO: cache_delete() strategically based on cache_details(); 
+      #       See: cache_info(), cache_list(), cache_setup()
     } else {
       nc_retry <- F
     }
@@ -180,10 +333,17 @@ while (i_t <= n_t) {
   # Error in R_nc4_open: NetCDF: Unknown file format
   # names(nc) # "summary" "data"
   
-  # write to csv
+  # r <- terra::rast("/var/folders/sl/7s3zmk1129jcrgsn1c4hcs2r0000gn/T//Rtmp7WUuAA/R/rerddap/9ffa4d5f18d055b1c87f83f7c9b347f9.nc")
+  # Warning message:
+  #   [rast] unknown calendar (assuming standard): GREGORIAN
+  # plot(r[[1]])
+  # plot(terra::rotate(r[[1]], left=T))
+  
+  # write indiv req to csv
   nc$data |> 
     mutate(across(where(is.array), as.vector)) |> 
     write_csv(req_csv)
+  # update whole dataset csv
   d |>
     bind_rows(
       read_csv(req_csv, show_col_types=F)) |>

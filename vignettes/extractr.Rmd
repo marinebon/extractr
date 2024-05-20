@@ -12,45 +12,67 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
-)
+  comment = "#>")
+# devtools::install_local(force = T)
+# devtools::load_all()
 ```
 
 ```{r setup}
-library(extractr) # devtools::install_local(force = T) # devtools::load_all()
+library(extractr)
 ```
 
-## Get regions of interests
-Load region-of-interest (RoI) geojson files.
-These RoIs are used to define the area that we will extract data for.
+## Get ERDDAP dataset
+
+ERDDAP dataset info and date ranges for two available datasets: global_monthly and global_8day.
+
 ```{r}
-if (!require("librarian"))
-  install.packages("librarian")
-
-librarian::shelf(
-  dplyr, here, mapview, sf)
-
-fk_roi_sf <- read_sf("https://github.com/marinebon/extract-app/raw/main/data/fk_roi.geojson")
-fk_sta_sf <- read_sf("https://github.com/marinebon/extract-app/raw/main/data/fk_sta.geojson")
-
-fk_sf <- bind_rows(fk_roi_sf, fk_sta_sf)
-
-mapview(fk_sf)
+ed_url  <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
+ed <- get_ed_info(ed_url)
+ed
 ```
 
-## Get ERDDAP dataset information
-```{r}
-ed_info <- get_ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html")
-ed_info
+```
+<ERDDAP info> hawaii_soest_d749_a206_cd3a 
+ Base URL: https://apdrc.soest.hawaii.edu/erddap 
+ Dataset Type: griddap 
+ Dimensions (range):  
+     time: (1992-01-02T00:00:00Z, 2023-04-28T00:00:00Z) 
+     LEV: (5.0, 5906.25) 
+     latitude: (-89.875, 89.875) 
+     longitude: (0.125, 359.875) 
+ Variables:  
+     salt: 
+         Units: PSU 
 ```
 
 Additional ERDDAP datasets of interest:
 - https://upwell.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
 - https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
 
-## Extract
-Extract a time-series for a given dataset and RoI
+## Get area of interest
+
+Load area of interest (AoI) geojson files.
+
 ```{r}
+library(dplyr)
+library(mapview)
+library(sf)
+
+aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
+
+aoi <- sf::read_sf(aoi_geo) |> 
+  dplyr::filter(nms == "FKNMS")
+
+mapview::mapView(aoi)
+```
+
+## Extract
+
+Extract a time-series for a given dataset and AoI
+
+```{r extract-old}
+#| eval: false
+
 dir_tif <- here::here("data_tmp")  # directory for storing .tif files
 grds <- get_ed_grds(
   ed_info, 
@@ -62,7 +84,31 @@ grds <- get_ed_grds(
 )
 ```
 
+## Get datetimes
+
+- Fix dimensions
+
+```{r}
+# arguments in
+var    <- "salt"
+var_z  <- "LEV"
+n_max  <- 10000
+
+rerddap:::dimvars(ed)
+# "time"      "LEV"       "latitude"  "longitude"
+ts <- get_ed_dim(ed, "time")      # 3,814
+zs <- get_ed_dim(ed, "LEV")       #    50
+xs <- get_ed_dim(ed, "longitude") # 1,440
+ys <- get_ed_dim(ed, "latitude")  #   720
+
+# let's limit to the most recent 10 times
+n_t <- length(ts) 
+ts[(n_t - 10):n_t]
+```
+
+
 ## Summarize the Extracted Time Series
+
 ```{r}
 ts_csv <- here::here("data_tmp/ts.csv")
 ts <- grds_to_ts(

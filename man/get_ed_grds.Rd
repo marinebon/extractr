@@ -17,7 +17,7 @@ get_ed_grds(
 }
 \arguments{
 \item{ed_info}{SeaScape ERDDAP info object, as returned by
-\code{\link{get_ed_info}})}
+\code{\link{ed_info}})}
 
 \item{ply}{polygon as spatial feature \code{\link[sf]{sf}}, as returned by
 \code{\link{get_url_ply}} or \code{\link{bbox_to_ply}}}
@@ -56,7 +56,7 @@ range.
 }
 \examples{
 ply  <- get_url_ply("mbnms")
-ed_i <- get_ed_info()
+ed_i <- ed_info()
 grds <- get_ed_grds(ed_i, ply, date_beg = "2020-01-01")
 grds
 

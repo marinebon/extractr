@@ -48,7 +48,7 @@ bbox_ply <- function(lon_min, lat_min, lon_max, lat_max){
 #'   skipping download or unzip and which shapefile used if more than one found.
 #'
 #' @return Returns a spatial feature \link[sf]{sf} polygon data frame.
-#' @import fs
+#' @importFrom fs path path_ext_remove
 #' @importFrom R.utils isUrl
 #' @importFrom here here
 #' @importFrom glue glue
@@ -75,7 +75,7 @@ get_url_ply <- function(
   # dir_ply = here::here("data_seascapeR")
 
   # TODO: handle error with Papahānaumokuākea
-  #   ply = get_url_ply("pmnm); ed_info <- get_ed_info();
+  #   ply = get_url_ply("pmnm); ed_info <- ed_info();
   #   get_ed_grds(ed_info, ply, date_beg = "2019-01-01", date_end = "2020-01-01")
   #     ERROR: One or both longitude values (-180, 180) outside data range (-179.975, 179.975)
 
@@ -146,7 +146,7 @@ get_url_ply <- function(
 
   suppressMessages({
     ply <- sf::read_sf(shps[length(shps)]) %>%
-      sf::st_transform(crs = 4326) %>%
+      sf::st_transform(crs = wgs84) %>%
       sf::st_union()
   })
   ply
@@ -159,7 +159,7 @@ get_url_ply <- function(
 #' range.
 #'
 #' @param ed_info SeaScape ERDDAP info object, as returned by
-#'   \code{\link{get_ed_info}})
+#'   \code{\link{ed_info}})
 #' @param ed_var SeaScape variable. One of "CLASS" (default) or "P" for
 #'   probability.
 #' @param ply polygon as spatial feature \code{\link[sf]{sf}}, as returned by
@@ -195,7 +195,7 @@ get_url_ply <- function(
 #'
 #' @examples
 #' ply  <- get_url_ply("mbnms")
-#' ed_i <- get_ed_info()
+#' ed_i <- ed_info()
 #' grds <- get_ed_grds(ed_i, ply, date_beg = "2020-01-01")
 #' grds
 #'
@@ -244,11 +244,11 @@ get_ed_grds <- function(
     message(glue("Found {length(dates_all)} dates between {date_beg} and {date_end}."))
 
   # TODO: handle error with Papahānaumokuākea
-  #   ply = get_url_ply("pmnm); ed_info <- get_ed_info();
+  #   ply = get_url_ply("pmnm); ed_info <- ed_info();
   #   get_ed_grds(ed_info, ply, date_beg = "2019-01-01", date_end = "2020-01-01")
   #     ERROR: One or both longitude values (-180, 180) outside data range (-179.975, 179.975)
 
-  # ed_info   = get_ed_info()
+  # ed_info   = ed_info()
   # ply       = get_url_ply("mbnms")
   # ed_var    = "CLASS"
   # date_beg  = "2019-01-01"; date_end  = "2021-01-01"
@@ -452,28 +452,32 @@ get_ed_grds <- function(
   grd
 }
 
-#' Get Seascape dataset information
+#' Get ERDDAP dataset information
 #'
-#' Get Seascape dataset information from ERDDAP server.
+#' Get ERDDAP dataset information.
 #'
 #' @param dataset `{region}_{frequency}` of dataset. Valid values (so far): "global_8day" or "global_monthly" (default).
 #'
 #' @return ERDDAP \code{\link[rerddap]{info}} object
-#' @import rerddap librarian fs
-#' @importFrom magrittr %>%
+#' @importFrom rerddap info
+#' @importFrom fs path_ext_remove
 #' @export
 #' @concept read
 #'
 #' @examples
-#' get_ed_info() # default: dataset = "global_monthly"
-#' get_ed_info("global_8day")
-get_ed_info <- function(dataset){
-  library(magrittr)
+#' ed_info() # default: dataset = "global_monthly"
+#' ed_info("global_8day")
+ed_info <- function(dataset){
   #dataset = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html"
 
-  if (librarian:::is_valid_url(dataset)){
+  # librarian:::is_valid_url
+  is_valid_url <- function(string){
+    any(grepl("(https?|ftp)://[^\\s/$.?#].[^\\s]*", string))
+  }
+
+  if (is_valid_url(dataset)){
     ed_url <- dirname(dirname(dataset))
-    dataset <- basename(dataset) %>% fs::path_ext_remove()
+    dataset <- basename(dataset) |> fs::path_ext_remove()
   } else{
     ed_url = "https://coastwatch.pfeg.noaa.gov/erddap"
   }
@@ -481,96 +485,366 @@ get_ed_info <- function(dataset){
   rerddap::info(dataset, url = ed_url)
 }
 
-#' Get date range of Seascape dataset
+#' Get dimension values from ERDDAP dataset
 #'
-#' @param ed_info ERDDAP info object, as returned by \code{\link{get_ed_info}})
+#' Given an ERDDAP dataset info object, return a vector of all available values in given dimension.
 #'
-#' @return date range of min and max
-#' @import dplyr stringr
-#' @export
-#' @concept read
+#' @param ed_info ERDDAP info object on SeaScape dataset, as returned by \code{\link{ed_info}})
+#' @param dim dimension to extract
 #'
-#' @examples
-#' ed_info <- get_ed_info()
-#' get_ed_dates(ed_info)
-get_ed_dates <- function(ed_info){
-
-  ed_info$alldata$time %>%
-    filter(attribute_name=="actual_range") %>%
-    pull(value) %>%
-    stringr::str_split(", ", simplify = T) %>%
-    as.numeric() %>%
-    as.POSIXct(origin = "1970-01-01", tz = "GMT") %>%
-    as.Date()
-}
-
-#' Get list of all dates available from Seascape dataset
-#'
-#' Given a SeaScape dataset info object and date range, return a vector of all available dates.
-#'
-#' @param ed_info ERDDAP info object on SeaScape dataset, as returned by \code{\link{get_ed_info}})
-#' @param date_beg begin date
-#' @param date_end end date
-#'
-#' @return vector of dates available
+#' @return vector of values for given dimension
 #'
 #' @importFrom glue glue
 #' @importFrom readr read_csv
-#' @importFrom magrittr %>%
 #' @importFrom dplyr pull
 #' @export
 #' @concept read
 #'
 #' @examples
-#' ed_i <- ed_info()
-#' get_ed_dates_all(ed_i, "2003-01-01", "2005-01-01")
-get_ed_dates_all <- function(ed_info, date_beg, date_end){
-  # dates = get_ed_dates(ed_info())
-  # date_beg = as.Date("2002-06-16"); date_end = as.Date("2022-01-16")
-
-  ed_dataset = attr(ed_info, "datasetid")
-
-  t_csv <- glue("{ed_info$base_url}/griddap/{ed_dataset}.csvp?time[({date_beg}T12:00:00Z):1:({date_end}T12:00:00Z)]")
-  d_t <- try(read_csv(t_csv, show_col_types = F))
-  if ("try-error" %in% class(d_t))
-    stop(glue("Problem fetching dates from ERDDAP with: {t_csv}"))
-
-  d_t %>%
-    pull() %>%
-    as.Date()
-}
-
-#' Get list of all dates available from Seascape dataset
-#'
-#' Given a SeaScape dataset info object and date range, return a vector of all available dates.
-#'
-#' @param ed_info ERDDAP info object on SeaScape dataset, as returned by \code{\link{get_ed_info}})
-#' @param var variable to extract
-#'
-#' @return vector of values for given variable
-#'
-#' @importFrom glue glue
-#' @importFrom readr read_csv
-#' @importFrom magrittr %>%
-#' @importFrom dplyr pull
-#' @export
-#' @concept read
-#'
-#' @examples
-#' ed_i <- get_ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
-#' get_ed_vals_all(ed_i, "LEV")
-get_ed_vals_all <- function(ed_info, var){
-  # ed_info = get_ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
+#' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+#' ed_dim(ed, "LEV")
+ed_dim <- function(ed, dim){
+  # ed_info = ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
   # var     = "LEV"
 
-  ed_dataset = attr(ed_info, "datasetid")
+  ed_dataset = attr(ed, "datasetid")
 
-  t_csv <- glue("{ed_info$base_url}/griddap/{ed_dataset}.csvp?{var}")
-  d_t <- try(read_csv(t_csv, show_col_types = F))
-  if ("try-error" %in% class(d_t))
-    stop(glue("Problem fetching dates from ERDDAP with: {t_csv}"))
+  d_url <- glue("{ed$base_url}/griddap/{ed_dataset}.csvp?{dim}")
+  d <- try(read_csv(d_url, show_col_types = F))
+  if ("try-error" %in% class(d))
+    stop(glue("Problem fetching dimension {dim} from ERDDAP: {d_url}"))
 
-  d_t  |>
-    pull()
+  pull(d)
+}
+
+#' Get dimensions from ERDDAP dataset
+#'
+#' Given an ERDDAP dataset info object, return a character vector of all available dimensions.
+#'
+#' @param ed ERDDAP info object, as returned by \code{\link{ed_info}})
+#'
+#' @return character vector of dimension names
+#'
+#' @importFrom glue glue
+#' @importFrom readr read_csv
+#' @importFrom dplyr pull
+#' @export
+#' @concept read
+#'
+#' @examples
+#' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+#' ed_dims(ed)
+ed_dims <- function(ed){
+  vars <- ed_vars(ed)$variable_name
+  dim_names <- names(ed$alldata) |>
+    setdiff(c("NC_GLOBAL", vars))
+  sapply(dim_names, ed_dim, ed = ed)
+}
+
+#' Get variables from ERDDAP dataset
+#'
+#' Given an ERDDAP dataset info object, return a character vector of all available
+#' variables. Variables are values that vary along the dimensions of the ERDDAP
+#' datasets (as returned by `ed_dims()`).
+#'
+#' @param ed ERDDAP info object, as returned by \code{\link{ed_info}})
+#'
+#' @return character vector of variable names
+#'
+#' @export
+#' @concept read
+#'
+#' @examples
+#' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+#' ed_vars(ed)
+ed_vars <- function(ed){
+  ed$variables
+}
+
+#' ERDDAP Extract
+#'
+#' Extract data from ERDDAP dataset by bounding box and/or polygon. This function
+#' provides the following enhancements to `rerddap::griddap()`:
+#' 1. Throttle request to `rerddap::griddap()` by chunks of time, so
+#' the ERDDAP server does not become unresponsive with too big a request while
+#' minimizing the number of requests.
+#' 1. Mask the grids by Area of Interest (`aoi`) (using `terra::mask()`).
+#' 1. Summarize grids over time by `aoi`, including sub-geometries, into a CSV (using `terra::zonal()`).
+#' 1. Preserve intermediary NetCDF and/or GeoTIFF files for raster visualization.
+#'
+#' @param ed   ERDDAP info object, of class `rerddap::info` as returned by \code{\link{ed_info}})
+#' @param var  variable to extract
+#' @param aoi  area of interest as a spatial feature object (`sf::sf`) containing
+#' polygon(s) over which to summarize the data over time. If `aoi` is left
+#' to the default `NULL` value, then the `bbox` is used.
+#' @param bbox bounding box (e.g.,
+#' `c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5)`), used to extract
+#' the grid (i.e., as `longitude` and `latitude`  arguments to `rerddap::griddap()`).
+#' If `bbox` is left to the default `NULL` value, then the bounding box is derived from the bounding box of the
+#' `aoi`.
+#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast, aoi)`
+#' @param rast_tif optional output as GeoTIFF masked to `aoi` from NetCDF
+#' @param dir_nc optional output directory to keep NetCDF files written to disk
+#' by `rerddap::griddap()`
+#' @param n_max_vals_per_req maximum number of values to request from ERDDAP
+#' server at a time. Default: 100,000
+#' @param ...  arguments to pass along to `rerddap::griddap()`, such as to
+#' filter the request by dimensions
+#'
+#' @return true if successful or false if unsuccessful #
+#' @import sf rerddap
+#' @importFrom terra crop ext ncell rast trim values
+#' @importFrom readr read_csv
+#' @export
+#'
+#' @examples
+#' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+#' (vars <- ed_vars(ed))
+#' ed_extract(
+#'   ed,
+#'   "analysed_sst",
+#'   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5))
+ed_extract <- function(
+    ed,
+    var,
+    aoi       = NULL,
+    bbox      = NULL,
+    zonal_csv,
+    zonal_fun = "mean",
+    rast_tif  = NULL,
+    mask_tif  = TRUE,
+    dir_nc    = NULL,
+    n_max_vals_per_req = 100000,
+    ...){
+
+  # DEBUG
+  # devtools::document(); devtools::load_all()
+  # ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")  # jplMURSST41 daily
+  # ed <- ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html")   # CoralTemp daily
+  # var  = ed_vars(ed)$variable_name[1]  # "analysed_sst"
+  # bbox = c(xmin = -83.0, ymin = 27.2, xmax = -82.3, ymax= 28.5)
+  # aoi = tbeptools::tbsegshed
+  # zonal_csv = here::here("data_tmp/tbep_sst.csv")
+  # zonal_csv = "~/Github/tbep-tech/climate-change-indicators/data/sst/tbep_sst.csv"
+  # dir_nc    = glue::glue("{fs::path_ext_remove(zonal_csv)}_nc")
+  # rast_tif  = glue::glue("{fs::path_ext_remove(zonal_csv)}.tif")
+  # ed_extract(ed, "analysed_sst", aoi, bbox, zonal_csv = zonal_csv, rast_tif = rast_tif, dir_nc = dir_nc, mask_tif = F)
+
+  # checks ----
+  stopifnot(class(ed) == "info")
+  # listviewer::jsonedit(ed$alldata)
+  vars <- ed_vars(ed)
+  stopifnot(var %in% vars$variable_name)
+
+  dims <- ed_dims(ed)
+  dims_xyt <- c("longitude","latitude","time")
+  # TODO: consider alternative names, eg lon / lat / date
+  stopifnot(all(dims_xyt %in% names(dims)))
+
+  if (file.exists(zonal_csv)){
+    d_z <- readr::read_csv(zonal_csv, show_col_types = F)
+    # TODO: filter based on other args (...)
+
+  }
+
+
+  if (is.null(aoi) & is.null(bbox))
+    stop("Please set argument into `ed_extract()` for `aoi`, `bbox` or both.")
+
+  wgs84 <- "+proj=longlat +datum=WGS84 +no_defs"
+  if (is.null(aoi))
+    aoi <- bbox |>
+      sf::st_bbox() |>
+      sf::st_as_sfc() |>
+      sf::st_as_sf(crs = wgs84)
+
+  if (terra::crs(aoi, proj=T) != wgs84)
+    aoi <- sf::st_transform(aoi, wgs84)
+
+  if (is.null(bbox)){
+    suppressMessages({
+      sf::sf_use_s2(F)
+      bbox <- aoi |>
+        sf::st_union() |>
+        sf::st_make_valid() |>
+        sf::st_bbox()
+      sf::sf_use_s2(T) }) }
+
+  # TODO: check for irregular grid and use terra::rasterize to regularize grid values
+  #       - [How to make RASTER from irregular point data without interpolation](https://gis.stackexchange.com/questions/79062/how-to-make-raster-from-irregular-point-data-without-interpolation)
+  # diff(dims$longitude) |> range() # 0.125  0.125
+  # diff(dims$latitude) |> range()  # 0.1082 0.1250
+
+  r_na <- expand.grid(
+    longitude = dims$longitude,
+    latitude  = dims$latitude,
+    value     = NA) |>
+    terra::rast(
+      type = "xyz",
+      crs  = wgs84)
+  # TODO: check assumption of grid Geographic CRS
+
+  if (terra::ext(r_na)[2] > 180){
+    # a) either rotate raster to -180, 180
+    #   r_na  <- terra::rotate(r_na, 180)
+    # b) or shift vector to 0, 360
+    aoi <- sf::st_shift_longitude(aoi) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
+  }
+
+  r_idx <- r_na
+  terra::values(r_idx) <- 1:terra::ncell(r_idx)
+
+  bb <- st_bbox(bb)
+  r_bb <- r_idx |>
+    terra::crop(bb) |>
+    terra::trim()
+  n_r <- terra::ncell(r_bb)
+
+  dims_other <- setdiff(names(dims), dims_xyt)
+  n_dims_other <- ifelse(
+    length(dims_other) > 0,
+    sapply(dims[dims_other], length) |> prod(),
+    1) # set to unity for multiplying with n_r
+
+  # n_per_t: number of values per individual time slice
+  n_per_t <- n_r * n_dims_other
+
+  stopifnot(n_max_vals_per_req >= n_per_t)
+
+  # n_t_per_req: number of time slices per request
+  n_t_per_req <- n_max_vals_per_req %/% n_per_t
+  n_t         <- length(dims$time)
+  n_reqs      <- ceiling(n_t / n_t_per_req)
+
+  message(glue("Downloading {n_reqs} requests, {n_t_per_req} time slices each"))
+
+  i_req <- 1
+  while (i_req <= n_reqs) {
+
+    i_t_beg <- (i_req - 1) * n_t_per_req + 1
+    i_t_end <- min(c(i_t_beg + n_t_per_req - 1, n_t))
+    t_req   <- dims$time[c(i_t_beg, i_t_end)] |>
+      format_ISO8601(usetz="Z")
+    # TODO: slice if not starting at i_t=1
+
+    # TODO: skip slices already fetched based on tif / csv outputs
+    if (file.exists(zonal_csv)){
+      d <- read_csv(zonal_csv, show_col_types=F)
+
+      if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
+        message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ':')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+        i_t_beg <- i_t_end + 1
+        next
+      }
+    } else {
+      d <- tibble()
+    }
+    message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+
+    # nc_retry <- T
+    # nc_n_try <- 0
+    # while (nc_retry){
+    # message("  griddap()")
+    res <- try(rerddap::griddap(
+      datasetx  = attr(ed, "datasetid"),
+      url       = ed$base_url,
+      fields    = var,
+      longitude = c(bbox[["xmin"]], bbox[["xmax"]]),
+      latitude  = c(bbox[["ymin"]], bbox[["ymax"]]),
+      time      = t_req,
+      fmt       = "nc",
+      store     = rerddap::disk(path = dir_nc) ) ) # ,
+      # TODO: get subset based on args in (...), eg time subset
+      # LEV = c(min(zs), max(zs))
+      #!!!list(...)))
+
+    if (inherits(res, "try-error")){
+      message("  ERROR!")
+      # browser()
+      # stop(glue("
+      # Problem fetching data from ERDDAP server using:
+      #   rerddap::griddap(
+      #     datasetx  = '{attr(ed_info, 'datasetid')}',
+      #     fields    = '{ed_var}',
+      #     url       = '{ed_info$base_url}',
+      #     longitude = c({bb['xmin']}, {bb['xmax']}),
+      #     latitude  = c({bb['ymin']}, {bb['ymax']}),
+      #     time      = c('{date}', '{date}'))"))
+    } #else {
+    #   nc_retry <- F
+    # }
+
+    i_req <- i_req + 1
+
+    ncs <- list.files(dir_nc, ".*\\.nc$", full.names = T) # recursive = T
+    r <- terra::rast(ncs)
+
+    # TODO: handle NetCDFs without time stamp
+    stopifnot(all(class(terra::time(r)) %in% c("POSIXct","POSIXt")))
+
+    # TODO: handle projections outside wgs84
+    stopifnot(terra::crs(r, proj=T) == wgs84)
+
+    if (mask_tif)
+      r <- terra::mask(r, aoi)
+
+    # TODO: add trim at end of iterations
+    # r <- terra::trim(r)
+
+    # TBEP: bbox of tbeptools::tbshed with 10 km buffer and raster trimmed
+    # ext(r) |> st_bbox() |>  round(1)
+    # xmin  ymin  xmax  ymax
+    # -83.0  27.2 -82.3  28.5
+
+    # get times for layer names and trim to date if all equal hours-minutes-seconds
+    #   leave full date-time for times(r) to referece exact ERDDAP time slice
+    # v_hms <- hour(time(r)) + minute(time(r))/60 + second(time(r))/3600
+    # is_hms_eq <- var(v_hms) == 0
+    # if (is_hms_eq){
+    #   lyr_times <- as.Date(terra::time(r)) |> as.character()
+    # } else {
+    #   lyr_times <- terra::time(r) |> str_replace_all(" ", "|") |> class() }
+    #
+    # lyrs <- glue("{var}_{lyr_times}")
+    lyrs <- glue("{var}|{terra::time(r)}")
+    stopifnot(length(dims_other) == 0)
+    # TODO: include other dims (eg depth) in lyr names
+    names(r) <- lyrs
+
+    # i_lyr = 1
+    # plot(r[[i_lyr]], main = names(r)[i_lyr])
+    # terra::plet(
+    #   r[[i_lyr]],
+    #   col   = rev(RColorBrewer::brewer.pal(11, "Spectral")),
+    #   tiles = leaflet::providers$CartoDB.DarkMatterNoLabels,
+    #   main  = names(r)[i_lyr] |> stringr::str_replace("\\|","<br>")) |>
+    #   leaflet::addProviderTiles(
+    #     leaflet::providers$CartoDB.DarkMatterOnlyLabels,
+    #     options = leaflet::providerTileOptions(
+    #       opacity = 0.5))
+
+    # TODO: write to tempfile.tif when appending layers
+    terra::writeRaster(
+      r, rast_tif, overwrite=T, gdal=c("COMPRESS=DEFLATE"))
+    r <- rast(rast_tif)
+
+    d_r <- terra::zonal(
+      r, terra::vect(aoi), fun=zonal_fun, exact = T, na.rm=T,
+      as.polygons = T) |>
+      st_as_sf() |>
+      st_drop_geometry() |>
+      tidyr::pivot_longer(
+        cols = -any_of(names(aoi)), names_to = "lyr", values_to = "val") |>
+      mutate(
+        var  = var,
+        time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
+          readr::parse_datetime())
+    write_csv(d_r, zonal_csv)
+
+    # TODO: append to tif if exists
+    # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
+    # TODO: +args dir_tif: infers keep_tif, otherwise use tmpdir
+    # TODO: +args fld_aoi: report in csv by fld  (otherwise st_union)
+  }
 }
 
