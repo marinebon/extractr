@@ -582,7 +582,7 @@ ed_vars <- function(ed){
 #' the grid (i.e., as `longitude` and `latitude`  arguments to `rerddap::griddap()`).
 #' If `bbox` is left to the default `NULL` value, then the bounding box is derived from the bounding box of the
 #' `aoi`.
-#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast, aoi)`
+#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast_tif, aoi)`
 #' @param rast_tif optional output as GeoTIFF masked to `aoi` from NetCDF
 #' @param dir_nc optional output directory to keep NetCDF files written to disk
 #' by `rerddap::griddap()`
@@ -590,6 +590,8 @@ ed_vars <- function(ed){
 #' server at a time. Default: 100,000
 #' @param ...  arguments to pass along to `rerddap::griddap()`, such as to
 #' filter the request by dimensions
+#' @param zonal_fun
+#' @param mask_tif
 #'
 #' @return true if successful or false if unsuccessful #
 #' @import sf rerddap
@@ -615,6 +617,8 @@ ed_extract <- function(
     mask_tif  = TRUE,
     dir_nc    = NULL,
     n_max_vals_per_req = 100000,
+    time_min  = NULL,
+    time_max  = NULL,
     ...){
 
   # DEBUG
@@ -641,12 +645,17 @@ ed_extract <- function(
   # TODO: consider alternative names, eg lon / lat / date
   stopifnot(all(dims_xyt %in% names(dims)))
 
+  if (is.null(dir_nc) & is.null(rast_tif))
+    dir_nc <- tempdir()
+  if (is.null(dir_nc) & !is.null(rast_tif))
+    dir_nc <- paste0(fs::path_ext_remove(rast_tif), "_nc")
+  if (!dir.exists(dir_nc))
+    dir.create(dir_nc, showWarnings = F, recursive = T)
+
   if (file.exists(zonal_csv)){
     d_z <- readr::read_csv(zonal_csv, show_col_types = F)
     # TODO: filter based on other args (...)
-
   }
-
 
   if (is.null(aoi) & is.null(bbox))
     stop("Please set argument into `ed_extract()` for `aoi`, `bbox` or both.")
@@ -694,7 +703,7 @@ ed_extract <- function(
   r_idx <- r_na
   terra::values(r_idx) <- 1:terra::ncell(r_idx)
 
-  bb <- st_bbox(bb)
+  bb <- st_bbox(bbox)
   r_bb <- r_idx |>
     terra::crop(bb) |>
     terra::trim()
@@ -713,7 +722,12 @@ ed_extract <- function(
 
   # n_t_per_req: number of time slices per request
   n_t_per_req <- n_max_vals_per_req %/% n_per_t
-  n_t         <- length(dims$time)
+
+  time_min   <- ifelse(is.null(time_min), min(dims$time), time_min) |> as.POSIXct(tz = "UTC")
+  time_max   <- ifelse(is.null(time_max), min(dims$time), time_max) |> as.POSIXct(tz = "UTC")
+  times_todo <- dims$time[dims$time >= time_min & dims$time <= time_max]
+
+  n_t         <- length(times_todo)
   n_reqs      <- ceiling(n_t / n_t_per_req)
 
   message(glue("Downloading {n_reqs} requests, {n_t_per_req} time slices each"))
@@ -723,7 +737,7 @@ ed_extract <- function(
 
     i_t_beg <- (i_req - 1) * n_t_per_req + 1
     i_t_end <- min(c(i_t_beg + n_t_per_req - 1, n_t))
-    t_req   <- dims$time[c(i_t_beg, i_t_end)] |>
+    t_req   <- times_todo[c(i_t_beg, i_t_end)] |>
       format_ISO8601(usetz="Z")
     # TODO: slice if not starting at i_t=1
 
@@ -775,76 +789,76 @@ ed_extract <- function(
     # }
 
     i_req <- i_req + 1
+  }
 
-    ncs <- list.files(dir_nc, ".*\\.nc$", full.names = T) # recursive = T
-    r <- terra::rast(ncs)
+  ncs <- list.files(dir_nc, ".*\\.nc$", full.names = T) # recursive = T
+  r <- terra::rast(ncs)
 
-    # TODO: handle NetCDFs without time stamp
-    stopifnot(all(class(terra::time(r)) %in% c("POSIXct","POSIXt")))
+  # TODO: handle NetCDFs without time stamp
+  stopifnot(all(class(terra::time(r)) %in% c("POSIXct","POSIXt")))
 
-    # TODO: handle projections outside wgs84
-    stopifnot(terra::crs(r, proj=T) == wgs84)
+  # TODO: handle projections outside wgs84
+  stopifnot(terra::crs(r, proj=T) == wgs84)
 
-    if (mask_tif)
-      r <- terra::mask(r, aoi)
+  if (mask_tif)
+    r <- terra::mask(r, aoi)
 
-    # TODO: add trim at end of iterations
-    # r <- terra::trim(r)
+  # TODO: add trim at end of iterations
+  # r <- terra::trim(r)
 
-    # TBEP: bbox of tbeptools::tbshed with 10 km buffer and raster trimmed
-    # ext(r) |> st_bbox() |>  round(1)
-    # xmin  ymin  xmax  ymax
-    # -83.0  27.2 -82.3  28.5
+  # TBEP: bbox of tbeptools::tbshed with 10 km buffer and raster trimmed
+  # ext(r) |> st_bbox() |>  round(1)
+  # xmin  ymin  xmax  ymax
+  # -83.0  27.2 -82.3  28.5
 
-    # get times for layer names and trim to date if all equal hours-minutes-seconds
-    #   leave full date-time for times(r) to referece exact ERDDAP time slice
-    # v_hms <- hour(time(r)) + minute(time(r))/60 + second(time(r))/3600
-    # is_hms_eq <- var(v_hms) == 0
-    # if (is_hms_eq){
-    #   lyr_times <- as.Date(terra::time(r)) |> as.character()
-    # } else {
-    #   lyr_times <- terra::time(r) |> str_replace_all(" ", "|") |> class() }
-    #
-    # lyrs <- glue("{var}_{lyr_times}")
-    lyrs <- glue("{var}|{terra::time(r)}")
-    stopifnot(length(dims_other) == 0)
-    # TODO: include other dims (eg depth) in lyr names
-    names(r) <- lyrs
+  # get times for layer names and trim to date if all equal hours-minutes-seconds
+  #   leave full date-time for times(r) to referece exact ERDDAP time slice
+  # v_hms <- hour(time(r)) + minute(time(r))/60 + second(time(r))/3600
+  # is_hms_eq <- var(v_hms) == 0
+  # if (is_hms_eq){
+  #   lyr_times <- as.Date(terra::time(r)) |> as.character()
+  # } else {
+  #   lyr_times <- terra::time(r) |> str_replace_all(" ", "|") |> class() }
+  #
+  # lyrs <- glue("{var}_{lyr_times}")
+  lyrs <- glue("{var}|{terra::time(r)}")
+  stopifnot(length(dims_other) == 0)
+  # TODO: include other dims (eg depth) in lyr names
+  names(r) <- lyrs
 
-    # i_lyr = 1
-    # plot(r[[i_lyr]], main = names(r)[i_lyr])
-    # terra::plet(
-    #   r[[i_lyr]],
-    #   col   = rev(RColorBrewer::brewer.pal(11, "Spectral")),
-    #   tiles = leaflet::providers$CartoDB.DarkMatterNoLabels,
-    #   main  = names(r)[i_lyr] |> stringr::str_replace("\\|","<br>")) |>
-    #   leaflet::addProviderTiles(
-    #     leaflet::providers$CartoDB.DarkMatterOnlyLabels,
-    #     options = leaflet::providerTileOptions(
-    #       opacity = 0.5))
+  # i_lyr = 1
+  # plot(r[[i_lyr]], main = names(r)[i_lyr])
+  # terra::plet(
+  #   r[[i_lyr]],
+  #   col   = rev(RColorBrewer::brewer.pal(11, "Spectral")),
+  #   tiles = leaflet::providers$CartoDB.DarkMatterNoLabels,
+  #   main  = names(r)[i_lyr] |> stringr::str_replace("\\|","<br>")) |>
+  #   leaflet::addProviderTiles(
+  #     leaflet::providers$CartoDB.DarkMatterOnlyLabels,
+  #     options = leaflet::providerTileOptions(
+  #       opacity = 0.5))
 
-    # TODO: write to tempfile.tif when appending layers
-    terra::writeRaster(
-      r, rast_tif, overwrite=T, gdal=c("COMPRESS=DEFLATE"))
-    r <- rast(rast_tif)
+  # TODO: write to tempfile.tif when appending layers
+  terra::writeRaster(
+    r, rast_tif, overwrite=T, gdal=c("COMPRESS=DEFLATE"))
+  r <- rast(rast_tif)
 
-    d_r <- terra::zonal(
-      r, terra::vect(aoi), fun=zonal_fun, exact = T, na.rm=T,
-      as.polygons = T) |>
-      st_as_sf() |>
-      st_drop_geometry() |>
-      tidyr::pivot_longer(
-        cols = -any_of(names(aoi)), names_to = "lyr", values_to = "val") |>
-      mutate(
-        var  = var,
-        time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
-          readr::parse_datetime())
-    write_csv(d_r, zonal_csv)
+  d_r <- terra::zonal(
+    r, terra::vect(aoi), fun=zonal_fun, exact = T, na.rm=T,
+    as.polygons = T) |>
+    st_as_sf() |>
+    st_drop_geometry() |>
+    tidyr::pivot_longer(
+      cols = -any_of(names(aoi)), names_to = "lyr", values_to = "val") |>
+    mutate(
+      var  = var,
+      time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
+        readr::parse_datetime())
+  write_csv(d_r, zonal_csv)
 
     # TODO: append to tif if exists
     # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
     # TODO: +args dir_tif: infers keep_tif, otherwise use tmpdir
     # TODO: +args fld_aoi: report in csv by fld  (otherwise st_union)
-  }
 }
 
