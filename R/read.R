@@ -611,7 +611,8 @@ ed_vars <- function(ed){
 ed_extract <- function(
     ed,
     var,
-    sf_zones       = NULL,
+    sf_zones  = NULL,
+    fld_zones = NULL,
     bbox      = NULL,
     zonal_csv,
     zonal_fun = "mean",
@@ -748,15 +749,15 @@ ed_extract <- function(
   n_t         <- length(times_todo)
   n_reqs      <- ceiling(n_t / n_t_per_req)
 
-  message(glue("Downloading {n_reqs} requests, {n_t_per_req} time slices each"))
+  message(glue("Downloading {n_reqs} requests, up to {n_t_per_req} time slices each"))
 
   i_req <- 1
   while (i_req <= n_reqs) {
 
-    i_t_beg <- (i_req - 1) * n_t_per_req + 1
-    i_t_end <- min(c(i_t_beg + n_t_per_req - 1, n_t))
-    t_req   <- times_todo[c(i_t_beg, i_t_end)] |>
-      format_ISO8601(usetz="Z")
+    i_t_beg   <- (i_req - 1) * n_t_per_req + 1
+    i_t_end   <- min(c(i_t_beg + n_t_per_req - 1, n_t))
+    t_req     <- times_todo[c(i_t_beg, i_t_end)]
+    t_req_str <- format_ISO8601(t_req, usetz="Z")
     # TODO: slice if not starting at i_t=1
 
     # TODO: skip slices already fetched based on tif / csv outputs
@@ -764,14 +765,14 @@ ed_extract <- function(
       d <- read_csv(zonal_csv, show_col_types=F)
 
       if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
-        message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ':')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+        message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
         i_t_beg <- i_t_end + 1
         next
       }
     } else {
       d <- tibble()
     }
-    message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(dims$time[c(i_t_beg, i_t_end)]), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+    message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
 
     # nc_retry <- T
     # nc_n_try <- 0
@@ -784,7 +785,7 @@ ed_extract <- function(
       fields    = var,
       longitude = c(bbox[["xmin"]], bbox[["xmax"]]),
       latitude  = c(bbox[["ymin"]], bbox[["ymax"]]),
-      time      = t_req,
+      time      = t_req_str,
       fmt       = "nc",
       store     = rerddap::disk(path = dir_nc) ) ) # ,
       # TODO: get subset based on args in (...), eg time subset
@@ -793,6 +794,7 @@ ed_extract <- function(
 
     if (inherits(res, "try-error")){
       err <-  attr(res, "condition")
+      browser()
       stop(glue::glue("  ERROR in calling {err$call}:\n {err$message}"))
     }
 
@@ -860,6 +862,7 @@ ed_extract <- function(
     exact       = T,
     na.rm       = T,
     as.polygons = T) |>
+    sf::st_as_sf() |>
     sf::st_drop_geometry() |>
     tidyr::pivot_longer(
       cols      = -dplyr::any_of(fld_zones),
