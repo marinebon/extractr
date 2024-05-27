@@ -21,15 +21,17 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Imports: 
-    fs,
-    stringr,
-    librarian,
-    rerddap,
     dplyr,
-    magrittr,
-    sf,
-    lubridate,
+    dygraphs,
+    fs,
     glue,
+    librarian,
+    lubridate,
+    magrittr,
+    rerddap,
     R.utils,
+    sf,
+    stringr,
     tabularaster,
     terra
+    

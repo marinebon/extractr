@@ -574,24 +574,26 @@ ed_vars <- function(ed){
 #'
 #' @param ed   ERDDAP info object, of class `rerddap::info` as returned by \code{\link{ed_info}})
 #' @param var  variable to extract
-#' @param aoi  area of interest as a spatial feature object (`sf::sf`) containing
-#' polygon(s) over which to summarize the data over time. If `aoi` is left
-#' to the default `NULL` value, then the `bbox` is used.
+#' @param sf_zones spatial feature object ([`sf`]) with zones to extract zonal
+#'   statistics from ERDDAP gridded data. If `sf_zones` is left
+#'   to the default `NULL` value, then the `bbox` is used.
+#' @param fld_zones character vector of unique field name(s) in `sf_zones` to
+#'   include in extracted zonal statistics
+#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast_tif, aoi)`
 #' @param bbox bounding box (e.g.,
 #' `c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5)`), used to extract
 #' the grid (i.e., as `longitude` and `latitude`  arguments to `rerddap::griddap()`).
 #' If `bbox` is left to the default `NULL` value, then the bounding box is derived from the bounding box of the
-#' `aoi`.
-#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast_tif, aoi)`
-#' @param rast_tif optional output as GeoTIFF masked to `aoi` from NetCDF
+#' `sf_zones`.
+#' @param rast_tif optional output as GeoTIFF masked to `sf_zones` from NetCDF
 #' @param dir_nc optional output directory to keep NetCDF files written to disk
 #' by `rerddap::griddap()`
 #' @param n_max_vals_per_req maximum number of values to request from ERDDAP
 #' server at a time. Default: 100,000
 #' @param ...  arguments to pass along to `rerddap::griddap()`, such as to
 #' filter the request by dimensions
-#' @param zonal_fun
-#' @param mask_tif
+#' @param zonal_fun function to summarize the data over time by `sf_zones`. Default:
+#' @param mask_tif mask the GeoTIFF by `sf_zones`. Default: TRUE
 #'
 #' @return true if successful or false if unsuccessful #
 #' @import sf rerddap
@@ -609,7 +611,7 @@ ed_vars <- function(ed){
 ed_extract <- function(
     ed,
     var,
-    aoi       = NULL,
+    sf_zones       = NULL,
     bbox      = NULL,
     zonal_csv,
     zonal_fun = "mean",
@@ -620,6 +622,10 @@ ed_extract <- function(
     time_min  = NULL,
     time_max  = NULL,
     ...){
+  # TODO: append to tif if exists
+  # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
+  # TODO: +args dir_tif: infers keep_tif, otherwise use tmpdir
+  # TODO: +args fld_zones: report in csv by fld  (otherwise st_union)
 
   # DEBUG
   # devtools::document(); devtools::load_all()
@@ -627,15 +633,27 @@ ed_extract <- function(
   # ed <- ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html")   # CoralTemp daily
   # var  = ed_vars(ed)$variable_name[1]  # "analysed_sst"
   # bbox = c(xmin = -83.0, ymin = 27.2, xmax = -82.3, ymax= 28.5)
-  # aoi = tbeptools::tbsegshed
+  # sf_zones = tbeptools::tbsegshed
   # zonal_csv = here::here("data_tmp/tbep_sst.csv")
   # zonal_csv = "~/Github/tbep-tech/climate-change-indicators/data/sst/tbep_sst.csv"
   # dir_nc    = glue::glue("{fs::path_ext_remove(zonal_csv)}_nc")
   # rast_tif  = glue::glue("{fs::path_ext_remove(zonal_csv)}.tif")
-  # ed_extract(ed, "analysed_sst", aoi, bbox, zonal_csv = zonal_csv, rast_tif = rast_tif, dir_nc = dir_nc, mask_tif = F)
+  # ed_extract(ed, "analysed_sst", sf_zones, bbox, zonal_csv = zonal_csv, rast_tif = rast_tif, dir_nc = dir_nc, mask_tif = F)
 
-  # checks ----
+  # check input arguments ----
   stopifnot(class(ed) == "info")
+  if (!is.null(sf_zones))
+    stopifnot("sf" %in% class(sf_zones))
+  if (!is.null(fld_zones))
+    stopifnot(fld_zones %in% names(sf_zones))
+  if (!is.null(time_min))
+    stopifnot("POSIXct" %in% class(time_min))
+  if (!is.null(time_max))
+    stopifnot("POSIXct" %in% class(time_max))
+  if (!is.null(bbox))
+    stopifnot(class(bbox) %in% c("bbox", "numeric"))
+  stopifnot(zonal_fun %in% c("mean", "min", "max", "sum", "isNA", "notNA"))
+
   # listviewer::jsonedit(ed$alldata)
   vars <- ed_vars(ed)
   stopifnot(var %in% vars$variable_name)
@@ -657,23 +675,23 @@ ed_extract <- function(
     # TODO: filter based on other args (...)
   }
 
-  if (is.null(aoi) & is.null(bbox))
-    stop("Please set argument into `ed_extract()` for `aoi`, `bbox` or both.")
+  if (is.null(sf_zones) & is.null(bbox))
+    stop("Please set argument into `ed_extract()` for `sf_zones`, `bbox` or both.")
 
   wgs84 <- "+proj=longlat +datum=WGS84 +no_defs"
-  if (is.null(aoi))
-    aoi <- bbox |>
+  if (is.null(sf_zones))
+    sf_zones <- bbox |>
       sf::st_bbox() |>
       sf::st_as_sfc() |>
       sf::st_as_sf(crs = wgs84)
 
-  if (terra::crs(aoi, proj=T) != wgs84)
-    aoi <- sf::st_transform(aoi, wgs84)
+  if (terra::crs(sf_zones, proj=T) != wgs84)
+    sf_zones <- sf::st_transform(sf_zones, wgs84)
 
   if (is.null(bbox)){
     suppressMessages({
       sf::sf_use_s2(F)
-      bbox <- aoi |>
+      bbox <- sf_zones |>
         sf::st_union() |>
         sf::st_make_valid() |>
         sf::st_bbox()
@@ -697,7 +715,7 @@ ed_extract <- function(
     # a) either rotate raster to -180, 180
     #   r_na  <- terra::rotate(r_na, 180)
     # b) or shift vector to 0, 360
-    aoi <- sf::st_shift_longitude(aoi) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
+    sf_zones <- sf::st_shift_longitude(sf_zones) # xmin: -123.1401 ymin: 35.5 xmax: -121.1036 ymax: 37.88163
   }
 
   r_idx <- r_na
@@ -760,6 +778,7 @@ ed_extract <- function(
     # while (nc_retry){
     # message("  griddap()")
     res <- try(rerddap::griddap(
+      # datasetx = "doh"))
       datasetx  = attr(ed, "datasetid"),
       url       = ed$base_url,
       fields    = var,
@@ -773,20 +792,9 @@ ed_extract <- function(
       #!!!list(...)))
 
     if (inherits(res, "try-error")){
-      message("  ERROR!")
-      # browser()
-      # stop(glue("
-      # Problem fetching data from ERDDAP server using:
-      #   rerddap::griddap(
-      #     datasetx  = '{attr(ed_info, 'datasetid')}',
-      #     fields    = '{ed_var}',
-      #     url       = '{ed_info$base_url}',
-      #     longitude = c({bb['xmin']}, {bb['xmax']}),
-      #     latitude  = c({bb['ymin']}, {bb['ymax']}),
-      #     time      = c('{date}', '{date}'))"))
-    } #else {
-    #   nc_retry <- F
-    # }
+      err <-  attr(res, "condition")
+      stop(glue::glue("  ERROR in calling {err$call}:\n {err$message}"))
+    }
 
     i_req <- i_req + 1
   }
@@ -801,7 +809,7 @@ ed_extract <- function(
   stopifnot(terra::crs(r, proj=T) == wgs84)
 
   if (mask_tif)
-    r <- terra::mask(r, aoi)
+    r <- terra::mask(r, sf_zones)
 
   # TODO: add trim at end of iterations
   # r <- terra::trim(r)
@@ -844,21 +852,23 @@ ed_extract <- function(
   r <- rast(rast_tif)
 
   d_r <- terra::zonal(
-    r, terra::vect(aoi), fun=zonal_fun, exact = T, na.rm=T,
+    x          = r,
+    z          = terra::vect(
+      sf_zones |>
+        dplyr::select(dplyr::all_of(fld_zones))),
+    fun         = zonal_fun,
+    exact       = T,
+    na.rm       = T,
     as.polygons = T) |>
-    st_as_sf() |>
-    st_drop_geometry() |>
+    sf::st_drop_geometry() |>
     tidyr::pivot_longer(
-      cols = -any_of(names(aoi)), names_to = "lyr", values_to = "val") |>
+      cols      = -dplyr::any_of(fld_zones),
+      names_to  = "lyr",
+      values_to = zonal_fun) |>
     mutate(
-      var  = var,
       time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
         readr::parse_datetime())
   write_csv(d_r, zonal_csv)
 
-    # TODO: append to tif if exists
-    # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
-    # TODO: +args dir_tif: infers keep_tif, otherwise use tmpdir
-    # TODO: +args fld_aoi: report in csv by fld  (otherwise st_union)
 }
 

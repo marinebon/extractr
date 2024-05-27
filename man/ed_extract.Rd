@@ -7,13 +7,16 @@
 ed_extract(
   ed,
   var,
-  aoi = NULL,
+  sf_zones = NULL,
   bbox = NULL,
   zonal_csv,
   zonal_fun = "mean",
   rast_tif = NULL,
+  mask_tif = TRUE,
   dir_nc = NULL,
   n_max_vals_per_req = 1e+05,
+  time_min = NULL,
+  time_max = NULL,
   ...
 )
 }
@@ -22,19 +25,23 @@ ed_extract(
 
 \item{var}{variable to extract}
 
-\item{aoi}{area of interest as a spatial feature object (\code{sf::sf}) containing
-polygon(s) over which to summarize the data over time. If \code{aoi} is left
+\item{sf_zones}{spatial feature object (\code{\link{sf}}) with zones to extract zonal
+statistics from ERDDAP gridded data. If \code{sf_zones} is left
 to the default \code{NULL} value, then the \code{bbox} is used.}
 
 \item{bbox}{bounding box (e.g.,
 \code{c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5)}), used to extract
 the grid (i.e., as \code{longitude} and \code{latitude}  arguments to \code{rerddap::griddap()}).
 If \code{bbox} is left to the default \code{NULL} value, then the bounding box is derived from the bounding box of the
-\code{aoi}.}
+\code{sf_zones}.}
 
-\item{zonal_csv}{output zonal statistics as CSV from \code{terra::zonal(rast, aoi)}}
+\item{zonal_csv}{output zonal statistics as CSV from \code{terra::zonal(rast_tif, aoi)}}
 
-\item{rast_tif}{optional output as GeoTIFF masked to \code{aoi} from NetCDF}
+\item{zonal_fun}{function to summarize the data over time by \code{sf_zones}. Default:}
+
+\item{rast_tif}{optional output as GeoTIFF masked to \code{sf_zones} from NetCDF}
+
+\item{mask_tif}{mask the GeoTIFF by \code{sf_zones}. Default: TRUE}
 
 \item{dir_nc}{optional output directory to keep NetCDF files written to disk
 by \code{rerddap::griddap()}}
@@ -44,6 +51,9 @@ server at a time. Default: 100,000}
 
 \item{...}{arguments to pass along to \code{rerddap::griddap()}, such as to
 filter the request by dimensions}
+
+\item{fld_zones}{character vector of unique field name(s) in \code{sf_zones} to
+include in extracted zonal statistics}
 }
 \value{
 true if successful or false if unsuccessful #
