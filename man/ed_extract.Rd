@@ -8,6 +8,7 @@ ed_extract(
   ed,
   var,
   sf_zones = NULL,
+  fld_zones = NULL,
   bbox = NULL,
   zonal_csv,
   zonal_fun = "mean",
@@ -28,6 +29,9 @@ ed_extract(
 \item{sf_zones}{spatial feature object (\code{\link{sf}}) with zones to extract zonal
 statistics from ERDDAP gridded data. If \code{sf_zones} is left
 to the default \code{NULL} value, then the \code{bbox} is used.}
+
+\item{fld_zones}{character vector of unique field name(s) in \code{sf_zones} to
+include in extracted zonal statistics}
 
 \item{bbox}{bounding box (e.g.,
 \code{c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5)}), used to extract
@@ -51,9 +55,6 @@ server at a time. Default: 100,000}
 
 \item{...}{arguments to pass along to \code{rerddap::griddap()}, such as to
 filter the request by dimensions}
-
-\item{fld_zones}{character vector of unique field name(s) in \code{sf_zones} to
-include in extracted zonal statistics}
 }
 \value{
 true if successful or false if unsuccessful #

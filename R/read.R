@@ -597,7 +597,7 @@ ed_vars <- function(ed){
 #'
 #' @return true if successful or false if unsuccessful #
 #' @import sf rerddap
-#' @importFrom terra crop ext ncell rast trim values
+#' @importFrom terra crop ext ncell rast subset trim values
 #' @importFrom readr read_csv
 #' @export
 #'
@@ -752,6 +752,7 @@ ed_extract <- function(
   message(glue("Downloading {n_reqs} requests, up to {n_t_per_req} time slices each"))
 
   i_req <- 1
+
   while (i_req <= n_reqs) {
 
     i_t_beg   <- (i_req - 1) * n_t_per_req + 1
@@ -766,7 +767,8 @@ ed_extract <- function(
 
       if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
         message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
-        i_t_beg <- i_t_end + 1
+        # i_t_beg <- i_t_end + 1
+        i_req <- i_req + 1
         next
       }
     } else {
@@ -794,18 +796,27 @@ ed_extract <- function(
 
     if (inherits(res, "try-error")){
       err <-  attr(res, "condition")
-      browser()
       stop(glue::glue("  ERROR in calling {err$call}:\n {err$message}"))
     }
 
     i_req <- i_req + 1
   }
-
+  # dir_nc <- "/Users/bbest/Github/noaa-onms/climate-dashboard-app/data/noaacrwsstDaily/FKNMS/2024_nc"
   ncs <- list.files(dir_nc, ".*\\.nc$", full.names = T) # recursive = T
+  # browser()
+  # TODO: compare extents like terra::compareGeom(rast(ncs[2]), rast(ncs[3]))
   r <- terra::rast(ncs)
 
   # TODO: handle NetCDFs without time stamp
   stopifnot(all(class(terra::time(r)) %in% c("POSIXct","POSIXt")))
+
+  idx <- tibble(
+    idx  = 1:terra::nlyr(r),
+    time = terra::time(r)) |>
+    arrange(time) |>
+    filter(!duplicated(time)) |>
+    pull(idx)
+  r <- terra::subset(r, idx)
 
   # TODO: handle projections outside wgs84
   stopifnot(terra::crs(r, proj=T) == wgs84)
