@@ -505,12 +505,12 @@ ed_info <- function(dataset){
 #' ed_dim(ed, "LEV")
 ed_dim <- function(ed, dim){
   # ed_info = ed_info("https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html")
-  # var     = "LEV"
+  # dim     = "time"
 
   ed_dataset = attr(ed, "datasetid")
 
   d_url <- glue("{ed$base_url}/griddap/{ed_dataset}.csvp?{dim}")
-  d <- try(read_csv(d_url, show_col_types = F))
+  d <- try(read_csv(d_url, show_col_types = F, progress = F))
   if ("try-error" %in% class(d))
     stop(glue("Problem fetching dimension {dim} from ERDDAP: {d_url}"))
 
@@ -620,6 +620,7 @@ ed_extract <- function(
     mask_tif  = TRUE,
     dir_nc    = NULL,
     n_max_vals_per_req = 100000,
+    n_max_retries      = 3,
     time_min  = NULL,
     time_max  = NULL,
     ...){
@@ -671,9 +672,19 @@ ed_extract <- function(
   if (!dir.exists(dir_nc))
     dir.create(dir_nc, showWarnings = F, recursive = T)
 
+  time_min   <- ifelse(is.null(time_min), min(dims$time), time_min) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
+  time_max   <- ifelse(is.null(time_max), max(dims$time), time_max) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
+  times_todo <- dims$time[dims$time >= time_min & dims$time <= time_max]
+
+  # filter
   if (file.exists(zonal_csv)){
-    d_z <- readr::read_csv(zonal_csv, show_col_types = F)
+    d_z <- readr::read_csv(zonal_csv, show_col_types = F, progress = F)
     # TODO: filter based on other args (...)
+
+    if (length(setdiff(times_todo, d_z$time)) == 0){
+      message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
+      return()
+    }
   }
 
   if (is.null(sf_zones) & is.null(bbox))
@@ -741,11 +752,6 @@ ed_extract <- function(
 
   # n_t_per_req: number of time slices per request
   n_t_per_req <- n_max_vals_per_req %/% n_per_t
-
-  time_min   <- ifelse(is.null(time_min), min(dims$time), time_min) |> as.POSIXct(tz = "UTC")
-  time_max   <- ifelse(is.null(time_max), min(dims$time), time_max) |> as.POSIXct(tz = "UTC")
-  times_todo <- dims$time[dims$time >= time_min & dims$time <= time_max]
-
   n_t         <- length(times_todo)
   n_reqs      <- ceiling(n_t / n_t_per_req)
 
@@ -771,38 +777,62 @@ ed_extract <- function(
         i_req <- i_req + 1
         next
       }
-    } else {
-      d <- tibble()
     }
     message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
 
-    # nc_retry <- T
-    # nc_n_try <- 0
-    # while (nc_retry){
-    # message("  griddap()")
-    res <- try(rerddap::griddap(
-      # datasetx = "doh"))
-      datasetx  = attr(ed, "datasetid"),
-      url       = ed$base_url,
-      fields    = var,
-      longitude = c(bbox[["xmin"]], bbox[["xmax"]]),
-      latitude  = c(bbox[["ymin"]], bbox[["ymax"]]),
-      time      = t_req_str,
-      fmt       = "nc",
-      store     = rerddap::disk(path = dir_nc) ) ) # ,
-      # TODO: get subset based on args in (...), eg time subset
-      # LEV = c(min(zs), max(zs))
-      #!!!list(...)))
+    # delete 0 byte nc files in folder that cause rerddap::griddap() to fail
+    # dir_nc <- "/share/github/noaa-onms/climate-dashboard-app/data/NOAA_DHW/GRNMS/2010_nc"
+    ncs0 <- dplyr::tibble(
+      nc   = list.files(dir_nc, ".*\\.nc$", full.names = T),
+      size = file.size(nc)) |>
+      dplyr::filter(size == 0) |>
+      dplyr::pull(nc)
+    unlink(ncs0)
 
-    if (inherits(res, "try-error")){
-      err <-  attr(res, "condition")
-      stop(glue::glue("  ERROR in calling {err$call}:\n {err$message}"))
+    nc_retry <- T
+    nc_n_try <- 1
+    n_max_retries
+    while (nc_retry){
+      res <- try(rerddap::griddap(
+        # datasetx = "doh"))
+        datasetx  = attr(ed, "datasetid"),
+        url       = ed$base_url,
+        fields    = var,
+        longitude = c(bbox[["xmin"]], bbox[["xmax"]]),
+        latitude  = c(bbox[["ymin"]], bbox[["ymax"]]),
+        time      = t_req_str,
+        fmt       = "nc",
+        store     = rerddap::disk(path = dir_nc) ) ) # ,
+        # TODO: get subset based on args in (...), eg time subset
+        # LEV = c(min(zs), max(zs))
+        #!!!list(...)))
+
+      if (inherits(res, "try-error")){
+        err <-  attr(res, "condition")
+        msg <- glue::glue("  ERROR in calling {err$call}:\n {err$message}")
+        nc_n_try <- nc_n_try + 1
+        if (nc_n_try > n_max_retries){
+          stop(msg)
+        } else {
+          message(msg,"\nRETRYing...")
+          Sys.sleep(1)
+        }
+      } else {
+        nc_retry <- F
+      }
     }
 
     i_req <- i_req + 1
   }
-  # dir_nc <- "/Users/bbest/Github/noaa-onms/climate-dashboard-app/data/noaacrwsstDaily/FKNMS/2024_nc"
-  ncs <- list.files(dir_nc, ".*\\.nc$", full.names = T) # recursive = T
+  # dir_nc <- "/share/github/noaa-onms/climate-dashboard-app/data/NOAA_DHW/CBNMS/2005_nc"
+  # dir_nc <- "/share/github/noaa-onms/climate-dashboard-app/data/NOAA_DHW/FGBNMS/1999_nc"
+  ncs <- dplyr::tibble(
+    nc   = list.files(dir_nc, ".*\\.nc$", full.names = T),
+    size = file.size(nc)) |>
+    dplyr::filter(size > 0) |>
+    dplyr::pull(nc)
+
+  # TODO: combine with existing *.tif (esp. where missing {yr}_nc/*.nc dirs)
   # browser()
   # TODO: compare extents like terra::compareGeom(rast(ncs[2]), rast(ncs[3]))
   r <- terra::rast(ncs)
@@ -810,12 +840,12 @@ ed_extract <- function(
   # TODO: handle NetCDFs without time stamp
   stopifnot(all(class(terra::time(r)) %in% c("POSIXct","POSIXt")))
 
-  idx <- tibble(
+  idx <- dplyr::tibble(
     idx  = 1:terra::nlyr(r),
     time = terra::time(r)) |>
-    arrange(time) |>
-    filter(!duplicated(time)) |>
-    pull(idx)
+    dplyr::arrange(time) |>
+    dplyr::filter(!duplicated(time)) |>
+    dplyr::pull(idx)
   r <- terra::subset(r, idx)
 
   # TODO: handle projections outside wgs84
