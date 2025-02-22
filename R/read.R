@@ -873,7 +873,8 @@ ed_extract <- function(
   #
   # lyrs <- glue("{var}_{lyr_times}")
   lyrs <- glue("{var}|{terra::time(r)}")
-  stopifnot(length(dims_other) == 0)
+  # stopifnot(length(dims_other) == 0)
+  stopifnot(all(length(dims[dims_other]) == 1))
   # TODO: include other dims (eg depth) in lyr names
   names(r) <- lyrs
 
