@@ -203,8 +203,8 @@ get_ed_grds <- function(
   ed_info,
   ply,
   ed_var    = "CLASS",
-  date_beg  = min(get_ed_dates(ed_info)),
-  date_end  = max(get_ed_dates(ed_info)),
+  date_beg  = min(ed_dim(ed_info, "time")),
+  date_end  = max(ed_dim(ed_info, "time")),
   dir_tif   = NULL,
   del_cache = F,
   verbose   = T){
@@ -216,7 +216,7 @@ get_ed_grds <- function(
   if (del_cache)
     rerddap::cache_delete_all(force = T)
 
-  s_dates <- get_ed_dates(ed_info)
+  s_dates <- ed_dim(ed_info, "time")
 
   date_beg <- as.Date(date_beg)
   date_end <- as.Date(date_end)
@@ -238,7 +238,7 @@ get_ed_grds <- function(
   }
 
   # dates on ERDDAP
-  dates_all <- get_ed_dates_all(ed_info, date_beg, date_end)
+  dates_all <- ed_dim(ed_info, "time")
 
   if (verbose)
     message(glue("Found {length(dates_all)} dates between {date_beg} and {date_end}."))
@@ -874,6 +874,7 @@ ed_extract <- function(
   # lyrs <- glue("{var}_{lyr_times}")
   lyrs <- glue("{var}|{terra::time(r)}")
   # stopifnot(length(dims_other) == 0)
+  browser()
   stopifnot(all(length(dims[dims_other]) == 1))
   # TODO: include other dims (eg depth) in lyr names
   names(r) <- lyrs

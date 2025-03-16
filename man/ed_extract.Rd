@@ -16,6 +16,7 @@ ed_extract(
   mask_tif = TRUE,
   dir_nc = NULL,
   n_max_vals_per_req = 1e+05,
+  n_max_retries = 3,
   time_min = NULL,
   time_max = NULL,
   ...

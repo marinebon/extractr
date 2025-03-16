@@ -8,8 +8,8 @@ get_ed_grds(
   ed_info,
   ply,
   ed_var = "CLASS",
-  date_beg = min(get_ed_dates(ed_info)),
-  date_end = max(get_ed_dates(ed_info)),
+  date_beg = min(ed_dim(ed_info, "time")),
+  date_end = max(ed_dim(ed_info, "time")),
   dir_tif = NULL,
   del_cache = F,
   verbose = T
