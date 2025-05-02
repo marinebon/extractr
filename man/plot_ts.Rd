@@ -8,7 +8,7 @@ plot_ts(
   ts,
   fld_avg = "mean",
   fld_sd = NULL,
-  fld_date = "date",
+  fld_date = "time",
   color = "red",
   label = "Temperature (°C)",
   ...
@@ -21,7 +21,7 @@ plot_ts(
 
 \item{fld_sd}{field name containing standard deviation average (optional); default = \code{NULL}}
 
-\item{fld_date}{field name containing date (required); default = \code{"date"}}
+\item{fld_date}{field name containing date (required); default = \code{"time"}}
 
 \item{color}{color to plot value; default = \code{"red"}}
 

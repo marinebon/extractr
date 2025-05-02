@@ -3,7 +3,14 @@
 * Added new function `check_url()` to `ed_info()` to check if the ERDDAP server 
   is valid and working, since running `rerddap::info(dataset, url = ed_url)` on
   offline ERDDAP crashes R.
+  
 * Fixed #8 with check for extra dimensions.
+
+* Updated vignette to use datasets:
+
+  - [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
+  - [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°, 2010-present, 3 Day Composite - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
+
 
 # extractr 0.1.3
 

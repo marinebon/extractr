@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>")
 # devtools::install_local(force = T)
-# devtools::load_all()
+devtools::load_all()
 ```
 
 ```{r setup}
@@ -22,9 +22,95 @@ knitr::opts_chunk$set(
 library(extractr)
 ```
 
-## Get ERDDAP dataset
+## Get area of interest (AoI)
 
-ERDDAP dataset info and date ranges for two available datasets: global_monthly and global_8day.
+Load area of interest (AoI) geojson files.
+
+```{r}
+library(dplyr)
+library(here)
+library(mapview)
+library(readr)
+library(sf)
+library(terra)
+
+aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
+
+aoi <- read_sf(aoi_geo) |> 
+  filter(nms == "FKNMS")
+(bb <- st_bbox(aoi))
+
+mapView(aoi)
+```
+
+## Dataset: sea surface temperature
+
+### Get info
+
+ERDDAP dataset:
+
+- [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
+
+```{r}
+ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
+ed <- ed_info(ed_url)
+ed
+```
+
+### Get dimensions
+
+```{r}
+var <- "analysed_sst"
+
+dims <- ed_dims(ed)
+names(dims)
+
+# let's limit to the most recent 10 times
+(times <- tail(dims[["time"]], 10))
+```
+
+### Extract dataset from AoI
+
+```{r}
+d_csv <- here("data_tmp/sst_timeseries.csv")
+r_tif <- here("data_tmp/sst_raster.tif")
+
+ed_extract(
+  ed        = ed,
+  var       = var,
+  sf_zones  = aoi,
+  fld_zones = "nms",
+  zonal_fun = "mean",
+  zonal_csv = d_csv,
+  rast_tif  = r_tif,
+  time_min  = times[1])
+```
+
+### Plot time series
+
+```{r}
+d <- read_csv(d_csv)
+head(d)
+
+plot_ts(d, label = "Surface Temperature (ºC)")
+```
+
+### Map raster
+
+```{r}
+r <- rast(r_tif)
+names(r)
+
+lyr <- names(r)[1]
+plet(r[lyr], tiles = "Esri.OceanBasemap")
+```
+
+
+## Dataset: sea surface salinity
+
+### Get info
+
+ERDDAP dataset:
 
 - [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°, 2010-present, 3 Day Composite - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
 
@@ -34,92 +120,50 @@ ed <- ed_info(ed_url)
 ed
 ```
 
-```
-<ERDDAP info> hawaii_soest_d749_a206_cd3a 
- Base URL: https://apdrc.soest.hawaii.edu/erddap 
- Dataset Type: griddap 
- Dimensions (range):  
-     time: (1992-01-02T00:00:00Z, 2023-04-28T00:00:00Z) 
-     LEV: (5.0, 5906.25) 
-     latitude: (-89.875, 89.875) 
-     longitude: (0.125, 359.875) 
- Variables:  
-     salt: 
-         Units: PSU 
-```
-
-Additional ERDDAP datasets of interest:
-- https://upwell.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
-- https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html
-
-## Get area of interest
-
-Load area of interest (AoI) geojson files.
+### Get dimensions
 
 ```{r}
-library(dplyr)
-library(mapview)
-library(sf)
+var <- "sss"
 
-aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
-
-aoi <- sf::read_sf(aoi_geo) |> 
-  dplyr::filter(nms == "FKNMS")
-
-mapview::mapView(aoi)
-```
-
-## Extract
-
-Extract a time-series for a given dataset and AoI
-
-```{r extract-old}
-#| eval: false
-
-dir_tif <- here::here("data_tmp")  # directory for storing .tif files
-grds <- get_ed_grds(
-  ed_info, 
-  ed_var="sst",  # variable name from the ERDDAP 
-  ply=fk_sf,  # polygon of the RoI
-  dir_tif=dir_tif, 
-  date_beg = "2021-10-01"  # start of time-series
-  # date_end defaults to the current date
-)
-```
-
-## Get datetimes
-
-- Fix dimensions
-
-```{r}
-# arguments in
-var    <- "salt"
-var_z  <- "LEV"
-n_max  <- 10000
-
-rerddap:::dimvars(ed)
-# "time"      "LEV"       "latitude"  "longitude"
-ts <- get_ed_dim(ed, "time")      # 3,814
-zs <- get_ed_dim(ed, "LEV")       #    50
-xs <- get_ed_dim(ed, "longitude") # 1,440
-ys <- get_ed_dim(ed, "latitude")  #   720
+dims <- ed_dims(ed)
+names(dims)
 
 # let's limit to the most recent 10 times
-n_t <- length(ts) 
-ts[(n_t - 10):n_t]
+(times <- tail(dims[["time"]], 10))
 ```
 
-
-## Summarize the Extracted Time Series
+### Extract dataset from AoI
 
 ```{r}
-ts_csv <- here::here("data_tmp/ts.csv")
-ts <- grds_to_ts(
-  grds, fxns = c("mean", "sd"), ts_csv, verbose = T)
-head(ts)
+d_csv <- here("data_tmp/sss_timeseries.csv")
+r_tif <- here("data_tmp/sss_raster.tif")
+
+ed_extract(
+  ed        = ed,
+  var       = var,
+  sf_zones  = aoi,
+  fld_zones = "nms",
+  zonal_fun = "mean",
+  zonal_csv = d_csv,
+  rast_tif  = r_tif,
+  time_min  = times[1])
 ```
 
-## Plot the Extracted Time Series
+### Plot time series
+
 ```{r}
-plot_ts(ts_csv, "mean", "sd")
+d <- read_csv(d_csv)
+head(d)
+
+plot_ts(d, label = "Surface Salinity (PSU)")
+```
+
+### Map raster
+
+```{r}
+r <- rast(r_tif)
+names(r)
+
+lyr <- names(r)[1]
+plet(r[lyr], tiles = "Esri.OceanBasemap")
 ```

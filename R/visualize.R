@@ -5,7 +5,7 @@
 #' @param ts file path to timeseries table as comma-separated value (CSV) or data frame (required)
 #' @param fld_avg field name containing value average; default = `"mean"`
 #' @param fld_sd  field name containing standard deviation average (optional); default = `NULL`
-#' @param fld_date field name containing date (required); default = `"date"`
+#' @param fld_date field name containing date (required); default = `"time"`
 #' @param color color to plot value; default = `"red"`
 #' @param label label for y-axes of plot
 #' @param ... additional parameters to pass to `dygraphs::dygraph()`
@@ -23,7 +23,7 @@
 #' }
 #'
 plot_ts <- function(
-    ts, fld_avg = "mean", fld_sd = NULL, fld_date = "date",
+    ts, fld_avg = "mean", fld_sd = NULL, fld_date = "time",
     color = "red", label = "Temperature (°C)", ...){
   # fld_avg = "mean"; fld_sd = "sd"; fld_date = "date"; color = "red"; label = "Temperature (°C)"
 

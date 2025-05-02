@@ -33,4 +33,7 @@ Imports:
     sf,
     stringr,
     tabularaster,
-    terra
+    terra,
+    here,
+    mapview,
+    readr

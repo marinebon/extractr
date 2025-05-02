@@ -27,26 +27,19 @@ tb_zones <- tbeptools::tbsegshed |>
 devtools::load_all()
 
 ed_extract(
-    # ed        = ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/NOAA_DHW.html"),
-    # var       = "CRW_SST",
-    # ERDDAP server down 2025-05-02
-    ed        = ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"),
-    var       = "analysed_sst",
-    bbox      = c(xmin = -83.0, ymin = 27.2 , xmax = -82.3, ymax= 28.5),
-    sf_zones  = tb_zones,
-    fld_zones = "bay_segment",
-    zonal_csv = here("inst/sst/tb_sst.csv"),
-    rast_tif  = here("inst/sst/tb_sst.tif"),
-    time_min  = as.POSIXct("2025-01-01 00:00:00 UTC"),
-    # time_max  = as.POSIXct("2025-03-01 00:00:00 UTC"),
-    mask_tif = F)
+  # ed        = ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/NOAA_DHW.html"),
+  # var       = "CRW_SST",
+  # ERDDAP server down 2025-05-02
+  ed        = ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"),
+  var       = "analysed_sst",
+  bbox      = c(xmin = -83.0, ymin = 27.2 , xmax = -82.3, ymax= 28.5),
+  sf_zones  = tb_zones,
+  fld_zones = "bay_segment",
+  zonal_csv = here("inst/sst/tb_sst.csv"),
+  rast_tif  = here("inst/sst/tb_sst.tif"),
+  time_min  = as.POSIXct("2025-01-01 00:00:00 UTC"),
+  # time_max  = as.POSIXct("2025-03-01 00:00:00 UTC"),
+  mask_tif = F)
 ```
 
-You can add options to executable code like this
 
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
