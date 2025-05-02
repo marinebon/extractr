@@ -452,6 +452,58 @@ get_ed_grds <- function(
   grd
 }
 
+#' Check if a URL is online
+#'
+#' Check if a URL is online by making a HEAD request. Returns TRUE if the URL is
+#' reachable and the status code is between 200 and 399 (inclusive). Returns FALSE
+#' otherwise.
+#'
+#' This function is useful for checking the availability of a server or
+#' resource before attempting to access it. In particular, it is used by
+#' `ed_info()` to check if the ERDDAP server is online before making requests
+#' to it since the underlying `rerddap::info()` crashes R if `url` is offline.
+#'
+#' @param url link to check
+#' @param timeout_ms timeout in milliseconds
+#' @return list with online status, status code, and message
+#' @importFrom crul HttpClient
+#' @export
+#' @concept read
+#' @examples
+#' check_url("https://coastwatch.pfeg.noaa.gov/erddap/griddap/NOAA_DHW.html")
+check_url <- function(url, timeout_ms = 5000) {
+  # use package crul already required by rerddap
+  # url = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/NOAA_DHW.html"; timeout_ms = 5000
+
+  # Create a new HTTP client with the given URL and timeout
+  cli <- crul::HttpClient$new(
+    url  = url,
+    opts = list(
+      timeout_ms = timeout_ms))
+
+  # Try to make a HEAD request (lightweight, just gets headers)
+  tryCatch({
+    response <- cli$head()
+
+    # Check status code
+    status <- response$status_code
+
+    # Return TRUE if status code is between 200-399 (success/redirect)
+    return(list(
+      online = status >= 200 && status < 400,
+      status_code = status,
+      message = paste("Server is online with status code:", status)
+    ))
+  }, error = function(e) {
+    # Return FALSE if any error occurs (connection refused, timeout, etc.)
+    return(list(
+      online = FALSE,
+      status_code = NULL,
+      message = paste("Server is offline or unreachable:", e$message)
+    ))
+  })
+}
+
 #' Get ERDDAP dataset information
 #'
 #' Get ERDDAP dataset information.
@@ -476,11 +528,16 @@ ed_info <- function(dataset){
   }
 
   if (is_valid_url(dataset)){
-    ed_url <- dirname(dirname(dataset))
+    ed_url  <- dirname(dirname(dataset))
     dataset <- basename(dataset) |> fs::path_ext_remove()
   } else{
     ed_url = "https://coastwatch.pfeg.noaa.gov/erddap"
   }
+
+  # test ERDDAP server is online
+  status <- check_url(ed_url)
+  if (!status$online)
+    stop(glue("ERDDAP server is offline or unreachable: {status$message}"))
 
   rerddap::info(dataset, url = ed_url)
 }
@@ -619,6 +676,7 @@ ed_extract <- function(
     rast_tif  = NULL,
     mask_tif  = TRUE,
     dir_nc    = NULL,
+    keep_nc   = FALSE,
     n_max_vals_per_req = 100000,
     n_max_retries      = 3,
     time_min  = NULL,
@@ -873,9 +931,9 @@ ed_extract <- function(
   #
   # lyrs <- glue("{var}_{lyr_times}")
   lyrs <- glue("{var}|{terra::time(r)}")
-  # stopifnot(length(dims_other) == 0)
-  # browser()
-  stopifnot(all(length(dims[dims_other]) == 1))
+  if (length(dims_other) > 0 && !all(length(dims[dims_other]) == 1))
+    stop(glue("Other dimensions not yet supported: {paste(dims_other, collapse = ',')}"))
+
   # TODO: include other dims (eg depth) in lyr names
   names(r) <- lyrs
 
@@ -916,5 +974,7 @@ ed_extract <- function(
         readr::parse_datetime())
   write_csv(d_r, zonal_csv)
 
+  if (!keep_nc)
+    unlink(dir_nc, recursive = T)
 }
 

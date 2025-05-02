@@ -1,6 +1,6 @@
 Package: extractr
 Title: Extract data from online dataset APIs
-Version: 0.1.3
+Version: 0.1.4
 URL: https://marinebon.github.io/extractr,
     https://github.com/marinebon/extractr
 BugReports: https://github.com/marinebon/extractr/issues

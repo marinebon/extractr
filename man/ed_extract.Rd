@@ -15,6 +15,7 @@ ed_extract(
   rast_tif = NULL,
   mask_tif = TRUE,
   dir_nc = NULL,
+  keep_nc = FALSE,
   n_max_vals_per_req = 1e+05,
   n_max_retries = 3,
   time_min = NULL,

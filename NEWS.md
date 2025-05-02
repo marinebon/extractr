@@ -1,3 +1,10 @@
+# extractr 0.1.4
+
+* Added new function `check_url()` to `ed_info()` to check if the ERDDAP server 
+  is valid and working, since running `rerddap::info(dataset, url = ed_url)` on
+  offline ERDDAP crashes R.
+* Fixed #8 with check for extra dimensions.
+
 # extractr 0.1.3
 
 * Modified `plot_ts()` so first argument could either be path to CSV or data frame.

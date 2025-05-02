@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+#| eval: false
 library(extractr)
 ```
 
@@ -25,9 +26,11 @@ library(extractr)
 
 ERDDAP dataset info and date ranges for two available datasets: global_monthly and global_8day.
 
+- [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°, 2010-present, 3 Day Composite - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
+
 ```{r}
-ed_url  <- "https://apdrc.soest.hawaii.edu/erddap/griddap/hawaii_soest_d749_a206_cd3a.html"
-ed <- get_ed_info(ed_url)
+ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html"
+ed <- ed_info(ed_url)
 ed
 ```
 
