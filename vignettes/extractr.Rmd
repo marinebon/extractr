@@ -14,13 +14,15 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>")
 # devtools::install_local(force = T)
-devtools::load_all()
+# if (interactive())
+#   devtools::load_all()
+unlink(here::here("data_tmp"), recursive = TRUE)
 ```
 
 Load packages and set up the environment.
 
 ```{r setup}
-#| eval: false
+#| eval: true
 library(extractr)
 ```
 
@@ -33,11 +35,12 @@ suppressPackageStartupMessages({
   library(sf)
   library(terra)
 })
+options(readr.show_col_types = F)
 ```
 
 ## Get area of interest (AoI)
 
-Load area of interest (AoI) from this [sanctuaries.geojson](https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson] for the Florida Keys National Marine Sanctuary (FKNMS).
+Load area of interest (AoI) from this [sanctuaries.geojson](https://github.com/noaa-onms/onmsR/blob/master/data-raw/sanctuaries.geojson) for the Florida Keys National Marine Sanctuary (FKNMS).
 
 ```{r}
 aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
