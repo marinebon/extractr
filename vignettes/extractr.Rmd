@@ -17,23 +17,29 @@ knitr::opts_chunk$set(
 devtools::load_all()
 ```
 
+Load packages and set up the environment.
+
 ```{r setup}
 #| eval: false
 library(extractr)
 ```
 
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(here)
+  library(mapview)
+  library(readr)
+  library(sf)
+  library(terra)
+})
+```
+
 ## Get area of interest (AoI)
 
-Load area of interest (AoI) geojson files.
+Load area of interest (AoI) from this [sanctuaries.geojson](https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson] for the Florida Keys National Marine Sanctuary (FKNMS).
 
 ```{r}
-library(dplyr)
-library(here)
-library(mapview)
-library(readr)
-library(sf)
-library(terra)
-
 aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
 
 aoi <- read_sf(aoi_geo) |> 
@@ -53,8 +59,7 @@ ERDDAP dataset:
 
 ```{r}
 ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
-ed <- ed_info(ed_url)
-ed
+(ed <- ed_info(ed_url))
 ```
 
 ### Get dimensions
