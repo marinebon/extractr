@@ -1,0 +1,20 @@
+url: https://marinebon.github.io/extractr
+template:
+  bootstrap: 5
+reference:
+- title: "Read"
+  desc: functions to read data, particularly from ERDDAP API
+  contents:
+  - has_concept("read")
+- title: "Analyze"
+  desc: functions to analyze data
+  contents:
+  - has_concept("analyze")
+- title: "Visualize"
+  desc: functions visualizing diagnostic outputs, particularly color coded data tables
+  contents:
+  - has_concept("visualize")
+- title: "Other"
+  desc: check for other functions or datasets not captured by above categories
+  contents:
+  - lacks_concepts(c("read", "analyze", "visualize"))

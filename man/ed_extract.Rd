@@ -20,6 +20,7 @@ ed_extract(
   n_max_retries = 3,
   time_min = NULL,
   time_max = NULL,
+  verbose = FALSE,
   ...
 )
 }
@@ -52,14 +53,27 @@ If \code{bbox} is left to the default \code{NULL} value, then the bounding box i
 \item{dir_nc}{optional output directory to keep NetCDF files written to disk
 by \code{rerddap::griddap()}}
 
-\item{n_max_vals_per_req}{maximum number of values to request from ERDDAP
+\item{keep_nc}{keep NetCDF files written to disk by \code{rerddap::griddap()}
 server at a time. Default: 100,000}
+
+\item{n_max_vals_per_req}{maximum number of values to request from ERDDAP}
+
+\item{n_max_retries}{maximum number of retries to request data from ERDDAP
+server}
+
+\item{time_min}{minimum time to extract from ERDDAP dataset}
+
+\item{time_max}{maximum time to extract from ERDDAP dataset}
+
+\item{verbose}{display messages on status of function. Useful for debugging
+or showing status while getting data from a wide range and/or big polygon.
+Default: FALSE.}
 
 \item{...}{arguments to pass along to \code{rerddap::griddap()}, such as to
 filter the request by dimensions}
 }
 \value{
-true if successful or false if unsuccessful #
+invisible first argument (\code{ed} object), since called for side effects
 }
 \description{
 Extract data from ERDDAP dataset by bounding box and/or polygon. This function

@@ -1,3 +1,13 @@
+# extractr 0.1.5
+
+* Added params to `ed_extract()` documentation: `keep_nc`, `n_max_vals_per_req`, 
+ `n_max_retries`, `time_min`, `time_max`, `verbose`.
+ 
+* The `ed_extract()` function now returns invisible first argument `ed`, per 
+  [6 Functions | Advanced R](https://adv-r.hadley.nz/functions.html#invisible).
+
+* Updated pkgdown to bootstrap 5 with Reference sections.
+
 # extractr 0.1.4
 
 * Added new function `check_url()` to `ed_info()` to check if the ERDDAP server 

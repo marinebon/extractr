@@ -10,6 +10,8 @@ editor_options:
 ---
 
 ```{r, include = FALSE}
+#| label: not_include
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>")
@@ -21,12 +23,16 @@ unlink(here::here("data_tmp"), recursive = TRUE)
 
 Load packages and set up the environment.
 
-```{r setup}
+```{r}
+#| label: load_extractr
 #| eval: true
+
 library(extractr)
 ```
 
 ```{r}
+#| label: load_pkgs
+
 suppressPackageStartupMessages({
   library(dplyr)
   library(here)
@@ -43,6 +49,8 @@ options(readr.show_col_types = F)
 Load area of interest (AoI) from this [sanctuaries.geojson](https://github.com/noaa-onms/onmsR/blob/master/data-raw/sanctuaries.geojson) for the Florida Keys National Marine Sanctuary (FKNMS).
 
 ```{r}
+#| label: aoi
+
 aoi_geo <- "https://raw.githubusercontent.com/noaa-onms/onmsR/master/data-raw/sanctuaries.geojson"
 
 aoi <- read_sf(aoi_geo) |> 
@@ -61,6 +69,8 @@ ERDDAP dataset:
 - [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
 
 ```{r}
+#| label: sst_ed_info
+
 ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
 (ed <- ed_info(ed_url))
 ```
@@ -68,6 +78,8 @@ ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
 ### Get dimensions
 
 ```{r}
+#| label: sst_ed_dims
+
 var <- "analysed_sst"
 
 dims <- ed_dims(ed)
@@ -80,6 +92,8 @@ names(dims)
 ### Extract dataset from AoI
 
 ```{r}
+#| label: sst_ed_extract
+
 d_csv <- here("data_tmp/sst_timeseries.csv")
 r_tif <- here("data_tmp/sst_raster.tif")
 
@@ -91,12 +105,15 @@ ed_extract(
   zonal_fun = "mean",
   zonal_csv = d_csv,
   rast_tif  = r_tif,
-  time_min  = times[1])
+  time_min  = times[1],
+  verbose   = TRUE)
 ```
 
 ### Plot time series
 
 ```{r}
+#| label: sst_plot_ts
+
 d <- read_csv(d_csv)
 head(d)
 
@@ -106,6 +123,8 @@ plot_ts(d, label = "Surface Temperature (ºC)")
 ### Map raster
 
 ```{r}
+#| label: sst_map_rast
+
 r <- rast(r_tif)
 names(r)
 
@@ -123,6 +142,8 @@ ERDDAP dataset:
 - [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°, 2010-present, 3 Day Composite - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
 
 ```{r}
+#| label: sss_ed_info
+
 ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html"
 ed <- ed_info(ed_url)
 ed
@@ -131,6 +152,8 @@ ed
 ### Get dimensions
 
 ```{r}
+#| label: sss_ed_dims
+
 var <- "sss"
 
 dims <- ed_dims(ed)
@@ -143,6 +166,8 @@ names(dims)
 ### Extract dataset from AoI
 
 ```{r}
+#| label: sss_ed_extract
+
 d_csv <- here("data_tmp/sss_timeseries.csv")
 r_tif <- here("data_tmp/sss_raster.tif")
 
@@ -160,6 +185,8 @@ ed_extract(
 ### Plot time series
 
 ```{r}
+#| label: sss_plot_ts
+
 d <- read_csv(d_csv)
 head(d)
 
@@ -169,6 +196,8 @@ plot_ts(d, label = "Surface Salinity (PSU)")
 ### Map raster
 
 ```{r}
+#| label: sss_map_rast
+
 r <- rast(r_tif)
 names(r)
 

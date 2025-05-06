@@ -636,26 +636,34 @@ ed_vars <- function(ed){
 #'   to the default `NULL` value, then the `bbox` is used.
 #' @param fld_zones character vector of unique field name(s) in `sf_zones` to
 #'   include in extracted zonal statistics
-#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast_tif, aoi)`
 #' @param bbox bounding box (e.g.,
 #' `c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5)`), used to extract
 #' the grid (i.e., as `longitude` and `latitude`  arguments to `rerddap::griddap()`).
 #' If `bbox` is left to the default `NULL` value, then the bounding box is derived from the bounding box of the
 #' `sf_zones`.
+#' @param zonal_csv output zonal statistics as CSV from `terra::zonal(rast_tif, aoi)`
+#' @param zonal_fun function to summarize the data over time by `sf_zones`. Default:
 #' @param rast_tif optional output as GeoTIFF masked to `sf_zones` from NetCDF
+#' @param mask_tif mask the GeoTIFF by `sf_zones`. Default: TRUE
 #' @param dir_nc optional output directory to keep NetCDF files written to disk
 #' by `rerddap::griddap()`
-#' @param n_max_vals_per_req maximum number of values to request from ERDDAP
+#' @param keep_nc keep NetCDF files written to disk by `rerddap::griddap()`
 #' server at a time. Default: 100,000
+#' @param n_max_vals_per_req maximum number of values to request from ERDDAP
+#' @param n_max_retries maximum number of retries to request data from ERDDAP
+#' server
+#' @param time_min minimum time to extract from ERDDAP dataset
+#' @param time_max maximum time to extract from ERDDAP dataset
+#' @param verbose display messages on status of function. Useful for debugging
+#' or showing status while getting data from a wide range and/or big polygon.
+#' Default: FALSE.
 #' @param ...  arguments to pass along to `rerddap::griddap()`, such as to
 #' filter the request by dimensions
-#' @param zonal_fun function to summarize the data over time by `sf_zones`. Default:
-#' @param mask_tif mask the GeoTIFF by `sf_zones`. Default: TRUE
-#'
-#' @return true if successful or false if unsuccessful #
+#' @return invisible first argument (`ed` object), since called for side effects
 #' @import sf rerddap
 #' @importFrom terra crop ext ncell rast subset trim values
 #' @importFrom readr read_csv
+#' @concept read
 #' @export
 #'
 #' @examples
@@ -681,6 +689,7 @@ ed_extract <- function(
     n_max_retries      = 3,
     time_min  = NULL,
     time_max  = NULL,
+    verbose   = FALSE,
     ...){
   # TODO: append to tif if exists
   # TODO: +args dir_nc: infers keep_nc, otherwise use tmpdir
@@ -740,7 +749,8 @@ ed_extract <- function(
     # TODO: filter based on other args (...)
 
     if (length(setdiff(times_todo, d_z$time)) == 0){
-      message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
+      if (verbose)
+        message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
       return()
     }
   }
@@ -813,7 +823,8 @@ ed_extract <- function(
   n_t         <- length(times_todo)
   n_reqs      <- ceiling(n_t / n_t_per_req)
 
-  message(glue("Downloading {n_reqs} requests, up to {n_t_per_req} time slices each"))
+  if (verbose)
+    message(glue("Downloading {n_reqs} requests, up to {n_t_per_req} time slices each"))
 
   i_req <- 1
 
@@ -830,13 +841,15 @@ ed_extract <- function(
       d <- read_csv(zonal_csv, show_col_types=F)
 
       if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
-        message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+        if (verbose)
+          message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
         # i_t_beg <- i_t_end + 1
         i_req <- i_req + 1
         next
       }
     }
-    message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+    if (verbose)
+      message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
 
     # delete 0 byte nc files in folder that cause rerddap::griddap() to fail
     # dir_nc <- "/share/github/noaa-onms/climate-dashboard-app/data/NOAA_DHW/GRNMS/2010_nc"
@@ -976,5 +989,7 @@ ed_extract <- function(
 
   if (!keep_nc)
     unlink(dir_nc, recursive = T)
+
+  return(invisible(ed))
 }
 

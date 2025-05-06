@@ -3,4 +3,7 @@ pkgdown: 2.1.2
 pkgdown_sha: ~
 articles:
   extractr: extractr.html
-last_built: 2025-05-02T15:40Z
+last_built: 2025-05-06T11:04Z
+urls:
+  reference: https://marinebon.github.io/extractr/reference
+  article: https://marinebon.github.io/extractr/articles
