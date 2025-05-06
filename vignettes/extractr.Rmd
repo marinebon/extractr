@@ -179,7 +179,8 @@ ed_extract(
   zonal_fun = "mean",
   zonal_csv = d_csv,
   rast_tif  = r_tif,
-  time_min  = times[1])
+  time_min  = times[1],
+  verbose   = TRUE)
 ```
 
 ### Plot time series
