@@ -751,6 +751,8 @@ ed_extract <- function(
     if (length(setdiff(times_todo, d_z$time)) == 0){
       if (verbose)
         message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
+      if (!keep_nc)
+        unlink(dir_nc, recursive = T)
       return()
     }
   }

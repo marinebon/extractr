@@ -8,6 +8,8 @@
 
 * Updated pkgdown to bootstrap 5 with Reference sections.
 
+* Fix removal of temporary `*_nc` folders from `ed_extract()` if `keep_nc = FALSE`.
+
 # extractr 0.1.4
 
 * Added new function `check_url()` to `ed_info()` to check if the ERDDAP server 
@@ -20,7 +22,6 @@
 
   - [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
   - [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°, 2010-present, 3 Day Composite - Data Access Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
-
 
 # extractr 0.1.3
 
