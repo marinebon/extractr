@@ -95,3 +95,4 @@ ed_extract(
   "analysed_sst",
   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5))
 }
+\concept{read}

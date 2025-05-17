@@ -4,6 +4,23 @@ format: html
 editor: visual
 ---
 
+
+```{r}
+librarian::shelf(
+  extractr, here, terra)
+
+r_tif <- "/Users/bbest/Github/noaa-onms/climate-dashboard-app/data/erddap_sst/CBNMS/2025.tif"
+r <- rast(r_tif)
+names(r)
+```
+
+```{r}
+# turn off execution of remaining R chunks
+knitr::opts_chunk$set(eval = F)
+```
+
+## Debugging #8 tbep
+
 Fixing:
 
 - [Error with \`ed\_extract()\` · Issue #8 · marinebon/extractr](https://github.com/marinebon/extractr/issues/8)

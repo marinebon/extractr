@@ -743,18 +743,27 @@ ed_extract <- function(
   time_max   <- ifelse(is.null(time_max), max(dims$time), time_max) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
   times_todo <- dims$time[dims$time >= time_min & dims$time <= time_max]
 
-  # filter
+  # filter and handle existing data
+  existing_data <- NULL
   if (file.exists(zonal_csv)){
     d_z <- readr::read_csv(zonal_csv, show_col_types = F, progress = F)
-    # TODO: filter based on other args (...)
 
-    if (length(setdiff(times_todo, d_z$time)) == 0){
+    # Keep existing data for later merging
+    existing_data <- d_z
+
+    # Extract only new times that aren't in the existing CSV
+    new_times <- setdiff(times_todo, d_z$time) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
+
+    if (length(new_times) == 0){
       if (verbose)
         message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
       if (!keep_nc)
         unlink(dir_nc, recursive = T)
       return()
     }
+
+    # Update times_todo to only fetch new data
+    times_todo <- new_times
   }
 
   if (is.null(sf_zones) & is.null(bbox))
@@ -987,6 +996,33 @@ ed_extract <- function(
     mutate(
       time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
         readr::parse_datetime())
+
+  # Merge with existing data if available
+  if (!is.null(existing_data)) {
+    # Remove any duplicate entries (same time and zone) from existing data
+    # that match the new data to ensure any duplicates are overwritten
+    if (!is.null(fld_zones) && length(fld_zones) > 0) {
+      # If we have zone fields, remove duplicates by time and zone fields
+      existing_filtered <- dplyr::anti_join(
+        existing_data,
+        d_r,
+        by = c("time", fld_zones))
+    } else {
+      # Otherwise just use time
+      existing_filtered <- dplyr::anti_join(
+        existing_data,
+        d_r,
+        by = "time")
+    }
+
+    # Combine filtered existing data with new data
+    d_r <- dplyr::bind_rows(existing_filtered, d_r) |>
+      dplyr::arrange(time)
+
+    if (verbose)
+      message(glue::glue("Merged {nrow(d_r) - nrow(existing_filtered)} new rows with {nrow(existing_filtered)} existing rows in {basename(zonal_csv)}"))
+  }
+
   write_csv(d_r, zonal_csv)
 
   if (!keep_nc)

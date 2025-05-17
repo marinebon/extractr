@@ -1,3 +1,10 @@
+# extractr 0.1.6
+
+* Fixed `ed_extract()` from wiping other time slices in the CSV, eg if `time_min` 
+  is set to a later date than what already exists in the `zonal_csv`. The 
+  function now preserves existing CSV data and only adds new dates, while 
+  overwriting duplicates appropriately.
+
 # extractr 0.1.5
 
 * Added params to `ed_extract()` documentation: `keep_nc`, `n_max_vals_per_req`, 
