@@ -27,6 +27,7 @@ Imports:
     librarian,
     lubridate,
     magrittr,
+    purrr,
     rerddap,
     R.utils,
     sf,
@@ -36,4 +37,5 @@ Imports:
     here,
     mapview,
     readr,
-    tibble
+    tibble,
+    tidyr
