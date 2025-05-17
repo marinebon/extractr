@@ -3,3 +3,8 @@
 ^data_ed$
 ^data_tmp$
 ^LICENSE\.md$
+^CLAUDE\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
