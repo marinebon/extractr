@@ -35,4 +35,5 @@ Imports:
     terra,
     here,
     mapview,
-    readr
+    readr,
+    tibble
