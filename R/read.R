@@ -744,28 +744,29 @@ ed_extract <- function(
   time_max   <- ifelse(is.null(time_max), max(dims$time), time_max) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
   times_todo <- dims$time[dims$time >= time_min & dims$time <= time_max]
 
+  # browser() # DEBUG
   # filter and handle existing data
-  existing_data <- NULL
-  if (file.exists(zonal_csv)){
-    d_z <- readr::read_csv(zonal_csv, show_col_types = F, progress = F)
-
-    # Keep existing data for later merging
-    existing_data <- d_z
-
-    # Extract only new times that aren't in the existing CSV
-    new_times <- setdiff(times_todo, d_z$time) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
-
-    if (length(new_times) == 0){
-      if (verbose)
-        message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
-      if (!keep_nc)
-        unlink(dir_nc, recursive = T)
-      return()
-    }
-
-    # Update times_todo to only fetch new data
-    times_todo <- new_times
-  }
+  # existing_data <- NULL
+  # if (file.exists(zonal_csv)){
+  #   d_z <- readr::read_csv(zonal_csv, show_col_types = F, progress = F)
+  #
+  #   # Keep existing data for later merging
+  #   existing_data <- d_z
+  #
+  #   # Extract only new times that aren't in the existing CSV
+  #   new_times <- setdiff(times_todo, d_z$time) |> as.POSIXct(tz = "UTC", origin="1970-01-01 00:00.00 UTC")
+  #
+  #   if (length(new_times) == 0){
+  #     if (verbose)
+  #       message(glue::glue("All times ({time_min} to {time_max}) are already present in {basename(zonal_csv)}, skipping ERDDAP fetch."))
+  #     if (!keep_nc)
+  #       unlink(dir_nc, recursive = T)
+  #     return()
+  #   }
+  #
+  #   # Update times_todo to only fetch new data
+  #   times_todo <- new_times
+  # }
 
   if (is.null(sf_zones) & is.null(bbox))
     stop("Please set argument into `ed_extract()` for `sf_zones`, `bbox` or both.")
@@ -850,17 +851,17 @@ ed_extract <- function(
     # TODO: slice if not starting at i_t=1
 
     # TODO: skip slices already fetched based on tif / csv outputs
-    if (file.exists(zonal_csv)){
-      d <- read_csv(zonal_csv, show_col_types=F)
-
-      if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
-        if (verbose)
-          message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
-        # i_t_beg <- i_t_end + 1
-        i_req <- i_req + 1
-        next
-      }
-    }
+    # if (file.exists(zonal_csv)){
+    #   d <- read_csv(zonal_csv, show_col_types=F)
+    #
+    #   if (all(as.POSIXct(t_req, tz = "UTC") %in% d$time)){
+    #     if (verbose)
+    #       message(glue("Skipping {i_t_beg}:{i_t_end} ({paste(as.Date(t_req), collapse = ' to ')}) of {n_t}, since already in csv ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
+    #     # i_t_beg <- i_t_end + 1
+    #     i_req <- i_req + 1
+    #     next
+    #   }
+    # }
     if (verbose)
       message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))
 
@@ -975,6 +976,7 @@ ed_extract <- function(
   #     options = leaflet::providerTileOptions(
   #       opacity = 0.5))
 
+  # browser() # DEBUG
   if (file_exists(rast_tif)){
     r_tmp_tif <- tempfile(fileext = ".tif")
     r_tmp <- c(rast(rast_tif), r)                            # merge layers old and new
@@ -1010,30 +1012,30 @@ ed_extract <- function(
         readr::parse_datetime())
 
   # Merge with existing data if available
-  if (!is.null(existing_data)) {
-    # Remove any duplicate entries (same time and zone) from existing data
-    # that match the new data to ensure any duplicates are overwritten
-    if (!is.null(fld_zones) && length(fld_zones) > 0) {
-      # If we have zone fields, remove duplicates by time and zone fields
-      existing_filtered <- dplyr::anti_join(
-        existing_data,
-        d_r,
-        by = c("time", fld_zones))
-    } else {
-      # Otherwise just use time
-      existing_filtered <- dplyr::anti_join(
-        existing_data,
-        d_r,
-        by = "time")
-    }
-
-    # Combine filtered existing data with new data
-    d_r <- dplyr::bind_rows(existing_filtered, d_r) |>
-      dplyr::arrange(time)
-
-    if (verbose)
-      message(glue::glue("Merged {nrow(d_r) - nrow(existing_filtered)} new rows with {nrow(existing_filtered)} existing rows in {basename(zonal_csv)}"))
-  }
+  # if (!is.null(existing_data)) {
+  #   # Remove any duplicate entries (same time and zone) from existing data
+  #   # that match the new data to ensure any duplicates are overwritten
+  #   if (!is.null(fld_zones) && length(fld_zones) > 0) {
+  #     # If we have zone fields, remove duplicates by time and zone fields
+  #     existing_filtered <- dplyr::anti_join(
+  #       existing_data,
+  #       d_r,
+  #       by = c("time", fld_zones))
+  #   } else {
+  #     # Otherwise just use time
+  #     existing_filtered <- dplyr::anti_join(
+  #       existing_data,
+  #       d_r,
+  #       by = "time")
+  #   }
+  #
+  #   # Combine filtered existing data with new data
+  #   d_r <- dplyr::bind_rows(existing_filtered, d_r) |>
+  #     dplyr::arrange(time)
+  #
+  #   if (verbose)
+  #     message(glue::glue("Merged {nrow(d_r) - nrow(existing_filtered)} new rows with {nrow(existing_filtered)} existing rows in {basename(zonal_csv)}"))
+  # }
 
   write_csv(d_r, zonal_csv)
 
