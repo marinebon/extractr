@@ -663,6 +663,7 @@ ed_vars <- function(ed){
 #' @import sf rerddap
 #' @importFrom terra crop ext ncell rast subset trim values
 #' @importFrom readr read_csv
+#' @importFrom fs file_delete file_move
 #' @concept read
 #' @export
 #'
@@ -844,6 +845,7 @@ ed_extract <- function(
     i_t_beg   <- (i_req - 1) * n_t_per_req + 1
     i_t_end   <- min(c(i_t_beg + n_t_per_req - 1, n_t))
     t_req     <- times_todo[c(i_t_beg, i_t_end)]
+
     t_req_str <- format_ISO8601(t_req, usetz="Z")
     # TODO: slice if not starting at i_t=1
 
@@ -973,10 +975,20 @@ ed_extract <- function(
   #     options = leaflet::providerTileOptions(
   #       opacity = 0.5))
 
-  # TODO: write to tempfile.tif when appending layers
-  terra::writeRaster(
-    r, rast_tif, overwrite=T, gdal=c("COMPRESS=DEFLATE"))
-  r <- rast(rast_tif)
+  if (file_exists(rast_tif)){
+    r_tmp_tif <- tempfile(fileext = ".tif")
+    r_tmp <- c(rast(rast_tif), r)                            # merge layers old and new
+    r_tmp <- subset(r_tmp, which(!duplicated(names(r_tmp)))) # rm duplicates
+    terra::writeRaster(r_tmp, r_tmp_tif)
+    fs::file_delete(rast_tif)
+    fs::file_move(r_tmp_tif, rast_tif)
+    rm(r); rm(r_tmp)
+  } else {
+    terra::writeRaster(r, rast_tif, overwrite = T, gdal=c("COMPRESS=DEFLATE"))
+  }
+  fs::file_delete(ncs)
+
+  r <- terra::rast(rast_tif)
 
   d_r <- terra::zonal(
     x          = r,

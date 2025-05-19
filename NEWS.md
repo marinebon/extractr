@@ -1,9 +1,16 @@
+# extractr 0.1.7
+
+* Fixed `ed_extract()` from wiping other time slices in the TIF, eg if `time_min` 
+  is set to a later date than what already exists in the `rast_tif`. The 
+  function now preserves existing raster layers in the raster and only adds new 
+  ones by removing duplicate layers before writing.
+
 # extractr 0.1.6
 
 * Fixed `ed_extract()` from wiping other time slices in the CSV, eg if `time_min` 
   is set to a later date than what already exists in the `zonal_csv`. The 
-  function now preserves existing CSV data and only adds new dates, while 
-  overwriting duplicates appropriately.
+  function now preserves existing CSV data and only adds new dates by
+  removing duplicate rows before writing.
 
 # extractr 0.1.5
 
