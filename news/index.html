@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">extractr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,8 +34,17 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.8" id="extractr-018">extractr 0.1.8<a class="anchor" aria-label="anchor" href="#extractr-018"></a></h2>
+<ul><li>For <code><a href="../reference/ed_extract.html">ed_extract()</a></code> instead of invisibly returning, made data frame output from zonal summary.</li>
+<li>Swapped example <code><a href="../reference/ed_extract.html">ed_extract()</a></code> to working ERDDAP URL.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.7" id="extractr-017">extractr 0.1.7<a class="anchor" aria-label="anchor" href="#extractr-017"></a></h2>
+<ul><li>Fixed <code><a href="../reference/ed_extract.html">ed_extract()</a></code> from wiping other time slices in the TIF, eg if <code>time_min</code> is set to a later date than what already exists in the <code>rast_tif</code>. The function now preserves existing raster layers in the raster and only adds new ones by removing duplicate layers before writing.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.6" id="extractr-016">extractr 0.1.6<a class="anchor" aria-label="anchor" href="#extractr-016"></a></h2>
-<ul><li>Fixed <code><a href="../reference/ed_extract.html">ed_extract()</a></code> from wiping other time slices in the CSV, eg if <code>time_min</code> is set to a later date than what already exists in the <code>zonal_csv</code>. The function now preserves existing CSV data and only adds new dates, while overwriting duplicates appropriately.</li>
+<ul><li>Fixed <code><a href="../reference/ed_extract.html">ed_extract()</a></code> from wiping other time slices in the CSV, eg if <code>time_min</code> is set to a later date than what already exists in the <code>zonal_csv</code>. The function now preserves existing CSV data and only adds new dates by removing duplicate rows before writing.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.5" id="extractr-015">extractr 0.1.5<a class="anchor" aria-label="anchor" href="#extractr-015"></a></h2>

@@ -25,7 +25,7 @@ Preserve intermediary NetCDF and/or GeoTIFF files for raster visualization.
 
     <a class="navbar-brand me-2" href="../index.html">extractr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,7 @@ minimizing the number of requests.</p></li>
 <span>  sf_zones <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fld_zones <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  bbox <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">zonal_csv</span>,</span>
+<span>  zonal_csv <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  zonal_fun <span class="op">=</span> <span class="st">"mean"</span>,</span>
 <span>  rast_tif <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mask_tif <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -172,20 +172,24 @@ filter the request by dimensions</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>invisible first argument (<code>ed</code> object), since called for side effects</p>
+    <p>data frame of the zonal summary of the raster (optionally also
+written to zonal_csv)</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="ed_info.html">ed_info</a></span><span class="op">(</span><span class="st">"https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html"):</span> ERDDAP server is offline or unreachable: Server is online with status code: 403</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="ed_info.html">ed_info</a></span><span class="op">(</span><span class="st">"https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="ed_vars.html">ed_vars</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'ed' not found</span>
+<span class="r-in"><span><span class="va">dims</span> <span class="op">&lt;-</span> <span class="fu"><a href="ed_dims.html">ed_dims</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">times</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">$</span><span class="va">time</span>, <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">ed_extract</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">ed</span>,</span></span>
 <span class="r-in"><span>  <span class="st">"analysed_sst"</span>,</span></span>
-<span class="r-in"><span>  bbox <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>xmin <span class="op">=</span> <span class="op">-</span><span class="fl">83.0</span>, ymin <span class="op">=</span> <span class="fl">27.3</span>, xmax <span class="op">=</span> <span class="op">-</span><span class="fl">81.8</span>, ymax<span class="op">=</span> <span class="fl">28.5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'ed' not found</span>
+<span class="r-in"><span>  bbox <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>xmin <span class="op">=</span> <span class="op">-</span><span class="fl">83.0</span>, ymin <span class="op">=</span> <span class="fl">27.3</span>, xmax <span class="op">=</span> <span class="op">-</span><span class="fl">81.8</span>, ymax<span class="op">=</span> <span class="fl">28.5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  time_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  time_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span> <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

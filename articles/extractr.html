@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">extractr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,7 @@ Form</a></li>
 <span><span class="co">#&gt;  Base URL: https://coastwatch.noaa.gov/erddap </span></span>
 <span><span class="co">#&gt;  Dataset Type: griddap </span></span>
 <span><span class="co">#&gt;  Dimensions (range):  </span></span>
-<span><span class="co">#&gt;      time: (1985-01-01T12:00:00Z, 2025-05-15T12:00:00Z) </span></span>
+<span><span class="co">#&gt;      time: (1985-01-01T12:00:00Z, 2025-05-20T12:00:00Z) </span></span>
 <span><span class="co">#&gt;      latitude: (-89.975, 89.975) </span></span>
 <span><span class="co">#&gt;      longitude: (-179.975, 179.975) </span></span>
 <span><span class="co">#&gt;  Variables:  </span></span>
@@ -139,20 +139,20 @@ Form</a></li>
 <span></span>
 <span><span class="co"># let's limit to the most recent 10 times</span></span>
 <span><span class="op">(</span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "2025-05-06 12:00:00 UTC" "2025-05-07 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [3] "2025-05-08 12:00:00 UTC" "2025-05-09 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [5] "2025-05-10 12:00:00 UTC" "2025-05-11 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [7] "2025-05-12 12:00:00 UTC" "2025-05-13 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [9] "2025-05-14 12:00:00 UTC" "2025-05-15 12:00:00 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "2025-05-11 12:00:00 UTC" "2025-05-12 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2025-05-13 12:00:00 UTC" "2025-05-14 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2025-05-15 12:00:00 UTC" "2025-05-16 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2025-05-17 12:00:00 UTC" "2025-05-18 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2025-05-19 12:00:00 UTC" "2025-05-20 12:00:00 UTC"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="extract-dataset-from-aoi">Extract dataset from AoI<a class="anchor" aria-label="anchor" href="#extract-dataset-from-aoi"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_timeseries.csv"</span><span class="op">)</span></span>
-<span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_raster.tif"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_timeseries.csv"</span><span class="op">)</span></span>
+<span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_raster.tif"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/ed_extract.html">ed_extract</a></span><span class="op">(</span></span>
+<span><span class="op">(</span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_extract.html">ed_extract</a></span><span class="op">(</span></span>
 <span>  ed        <span class="op">=</span> <span class="va">ed</span>,</span>
 <span>  var       <span class="op">=</span> <span class="va">var</span>,</span>
 <span>  sf_zones  <span class="op">=</span> <span class="va">aoi</span>,</span>
@@ -161,9 +161,22 @@ Form</a></li>
 <span>  zonal_csv <span class="op">=</span> <span class="va">d_csv</span>,</span>
 <span>  rast_tif  <span class="op">=</span> <span class="va">r_tif</span>,</span>
 <span>  time_min  <span class="op">=</span> <span class="va">times</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
-<span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Downloading 1 requests, up to 59 time slices each</span></span>
-<span><span class="co">#&gt; Fetching request 1 of 1 (2025-05-06 to 2025-05-15) ~ 11:19:17 UTC</span></span></code></pre></div>
+<span><span class="co">#&gt; Fetching request 1 of 1 (2025-05-11 to 2025-05-20) ~ 18:39:48 UTC</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt;    nms   lyr                               mean time               </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS analysed_sst|2025-05-11 12:00:00  27.5 2025-05-11 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS analysed_sst|2025-05-12 12:00:00  27.4 2025-05-12 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS analysed_sst|2025-05-13 12:00:00  27.4 2025-05-13 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS analysed_sst|2025-05-14 12:00:00  27.6 2025-05-14 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS analysed_sst|2025-05-15 12:00:00  27.9 2025-05-15 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS analysed_sst|2025-05-16 12:00:00  28.2 2025-05-16 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS analysed_sst|2025-05-17 12:00:00  28.3 2025-05-17 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS analysed_sst|2025-05-18 12:00:00  28.3 2025-05-18 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS analysed_sst|2025-05-19 12:00:00  28.6 2025-05-19 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS analysed_sst|2025-05-20 12:00:00  28.7 2025-05-20 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plot-time-series">Plot time series<a class="anchor" aria-label="anchor" href="#plot-time-series"></a>
@@ -174,16 +187,16 @@ Form</a></li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt;   nms   lyr                               mean time               </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS analysed_sst|2025-05-06 12:00:00  27.1 2025-05-06 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS analysed_sst|2025-05-07 12:00:00  27.2 2025-05-07 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS analysed_sst|2025-05-08 12:00:00  27.3 2025-05-08 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS analysed_sst|2025-05-09 12:00:00  27.3 2025-05-09 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS analysed_sst|2025-05-10 12:00:00  27.2 2025-05-10 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS analysed_sst|2025-05-11 12:00:00  27.5 2025-05-11 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS analysed_sst|2025-05-11 12:00:00  27.5 2025-05-11 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS analysed_sst|2025-05-12 12:00:00  27.4 2025-05-12 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS analysed_sst|2025-05-13 12:00:00  27.4 2025-05-13 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS analysed_sst|2025-05-14 12:00:00  27.6 2025-05-14 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS analysed_sst|2025-05-15 12:00:00  27.9 2025-05-15 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS analysed_sst|2025-05-16 12:00:00  28.2 2025-05-16 <span style="color: #949494;">12:00:00</span></span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_ts.html">plot_ts</a></span><span class="op">(</span><span class="va">d</span>, label <span class="op">=</span> <span class="st">"Surface Temperature (ºC)"</span><span class="op">)</span></span></code></pre></div>
 <div class="dygraphs html-widget html-fill-item" id="htmlwidget-e5c8c404fe174e4c81bd" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Temperature (ºC)","labels":["day","Surface Temperature (ºC)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Temperature (ºC)":{"axis":"y"}}},"scale":"daily","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-05-06T12:00:00.000Z","2025-05-07T12:00:00.000Z","2025-05-08T12:00:00.000Z","2025-05-09T12:00:00.000Z","2025-05-10T12:00:00.000Z","2025-05-11T12:00:00.000Z","2025-05-12T12:00:00.000Z","2025-05-13T12:00:00.000Z","2025-05-14T12:00:00.000Z","2025-05-15T12:00:00.000Z"],[27.14267397762505,27.17248904477665,27.25847380212388,27.28235285045242,27.20508319663913,27.47195941538125,27.43367735776404,27.40038584145544,27.64712758930891,27.89054767268684]]},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Temperature (ºC)","labels":["day","Surface Temperature (ºC)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Temperature (ºC)":{"axis":"y"}}},"scale":"daily","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-05-11T12:00:00.000Z","2025-05-12T12:00:00.000Z","2025-05-13T12:00:00.000Z","2025-05-14T12:00:00.000Z","2025-05-15T12:00:00.000Z","2025-05-16T12:00:00.000Z","2025-05-17T12:00:00.000Z","2025-05-18T12:00:00.000Z","2025-05-19T12:00:00.000Z","2025-05-20T12:00:00.000Z"],[27.47195941538125,27.43367735776404,27.40038584145544,27.64712758930891,27.89054767268684,28.22253995038654,28.25977754949957,28.34141400713188,28.5970339729818,28.70430261782619]]},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3 id="map-raster">Map raster<a class="anchor" aria-label="anchor" href="#map-raster"></a>
@@ -191,16 +204,16 @@ Form</a></li>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="va">r_tif</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "analysed_sst|2025-05-06 12:00:00" "analysed_sst|2025-05-07 12:00:00"</span></span>
-<span><span class="co">#&gt;  [3] "analysed_sst|2025-05-08 12:00:00" "analysed_sst|2025-05-09 12:00:00"</span></span>
-<span><span class="co">#&gt;  [5] "analysed_sst|2025-05-10 12:00:00" "analysed_sst|2025-05-11 12:00:00"</span></span>
-<span><span class="co">#&gt;  [7] "analysed_sst|2025-05-12 12:00:00" "analysed_sst|2025-05-13 12:00:00"</span></span>
-<span><span class="co">#&gt;  [9] "analysed_sst|2025-05-14 12:00:00" "analysed_sst|2025-05-15 12:00:00"</span></span>
+<span><span class="co">#&gt;  [1] "analysed_sst|2025-05-11 12:00:00" "analysed_sst|2025-05-12 12:00:00"</span></span>
+<span><span class="co">#&gt;  [3] "analysed_sst|2025-05-13 12:00:00" "analysed_sst|2025-05-14 12:00:00"</span></span>
+<span><span class="co">#&gt;  [5] "analysed_sst|2025-05-15 12:00:00" "analysed_sst|2025-05-16 12:00:00"</span></span>
+<span><span class="co">#&gt;  [7] "analysed_sst|2025-05-17 12:00:00" "analysed_sst|2025-05-18 12:00:00"</span></span>
+<span><span class="co">#&gt;  [9] "analysed_sst|2025-05-19 12:00:00" "analysed_sst|2025-05-20 12:00:00"</span></span>
 <span></span>
 <span><span class="va">lyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plet.html" class="external-link">plet</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">lyr</span><span class="op">]</span>, tiles <span class="op">=</span> <span class="st">"Esri.OceanBasemap"</span><span class="op">)</span></span></code></pre></div>
 <div class="leaflet html-widget html-fill-item" id="htmlwidget-36aa3d2a04d42bbc2145" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAAeCAYAAACfWhZxAAAFLUlEQVRYheWYT4hfVxXHP+f+ee/9ZvKbTJPGGKVEJUJCKXZT1KWgGFwJXbhScNcuREgQoxvFhca2iSJWXSiiWxFdxqWgFKEp1nYwtpUyiJg6dZKZyfx+78+957i4v/lNQlsaq23izIHD7/fue/Du533PPffcA/vMPvKZJ8zd6Um805YrYf9B1/sM+qHPXrAc2V/QForvK+gcBXP7DNqk+J62D37jop36ykXbuX7wkfI/3LkpvQMmIAoPPnrRJIPO4nrPhvcHvn3BJIMbAJ2Fti/39iT08ScfN1HBDeBSURt21/OehCYYokVlSeCygcBz3zsjsAehT/3qa4aBZPDdLLwF9KbstaegH/79I5ZVoHf4FnwLLhkG/On7Z+ab1Z6B/twfPm9XJwfobtSEbUeYgk+GAM/85Owtu/P//Zb18xc+bE9tnuDKxjJX1w/irlVUmyW0UXj6p2dfU47c9dCf/t2jdnL8Ch8fP8/HRoY/9uIc4tcvPWAr7SH+Nlnm79eWSWsNzboQb4Dv4fLrAMNdAn38h48ZjeLqjI8ZEcOJUcXEjWGL9X6Bv/ZHOexf5vLqfTbRyOpwL1e6e7i8cZwX147Q/XOB+lU/V/mZH595w4LzjkCfOnfRcgPDkpGXE1INxCYxqgeCUwwwE4JTkjo2hgVemB6js8DYtbQWWe3uZWXjGH9ZO0L3yiLVq576Ojz33TeG3bE7Am0ecgO6mIkLPctLE5abKQdij4iRsmeaA8kcwSnTHPhHu8T6MCKbsNEvcHV7zNq1MXmtoV4v2dr1t/d+ATj9vjPzohwnILOPJQJaNnZkNh48JiBFDi5dOX9b55aPPvyEDWOhXRa6I9AdHVg8POHo0iZHRzc4EDqiyyRztDmyOTRs9TXJHKoOA4bsmfaRybQmbUXCZqC6JvgprFx4c4V3rCg9qgocBQRj91oA78A7zJVfzDAtVc8n7/+qWR3QOqCVR4PDgqDRFUWjQyMMjdAtCd090B0ZWHrXFicO/Yv3jq6z6HsMYZojrQYmuWKjb9iYjph0kaGLaHJY75DO4VtHvV3KzLANz3/n9oHn0NpEJFsBVuM3K98sEfD+s4XcgUkB1uiL4maIGuYEmwHn2t0Cm2sh16UvlWoYDsKwrMSDPe8eb/GeZoPD1Ta9Bs5/6Jfyqd9+waYpsNk1bE0auu0Kph5pHb6T4v2s2mr/c9hboM17QJEh7wLf90UjpdkCAAkejZ68WKGxtB8kF2iNDq2EXDlSLWgNw2gG3IDG0qYZDig6zjQx0abI6vYhXt4+zGbXALCyegxMsMEhrcdPpXhbykk3gB/g2SffGuyOySce+rqBICkjQ0KGDEOCrMBM/RixOpLHI9I4khc82QtiJRA0zFStIDVCWoBhDGlkWAXmrXilSKX4KuNDBoGhDeg04KYe1wqSZRewhdCVBPXHH/13oDdbcF3aTVhKSWTeF99JYjtr2VGUdWBBMErPSYOgofSUtZqpW4FVoKHkCEmCJA8TjxIxFSRD6ATf3XQ40HIU3DkRvR0WpO3Bey79+Vty+uQ5m2dof/M7ZQZdxsRKaAOggpMS5i4ZqoJoWXeSwZmU412S3bF+V0XflUMBBk//7PUrqP85NNc3oa4A5tvP6ZPnDJuBipRk5R2G4HtFrEDOE1kQNAo5OnwPbhDCBNTLvGUz9wzP/uDtU/G2oHVrG9rulsFLV87L6RNfMoLHgkcoGVmSIllxO48b5WMEh0bBBeOpX3z5ru83Bm2nSO9fc+PSS4/f9ZN/q/ZvQ65x5/xTOcEAAAAASUVORK5CYII=",[[25.69999920880353,-83.15000002501441],[24.30000079119646,-80.04999692322777]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #DDE318 5.10205769727905%, #40BD72 30.612248869948%, #26818E 56.122440042617%, #423E85 81.632631215286%, #440154 "],"labels":["28.0","27.5","27.0","26.5"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"analysed_sst|2025-05-06 12:00:00","extra":{"p_1":0.05102057697279053,"p_n":0.8163263121528597},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.30000079119646,25.69999920880353],"lng":[-83.15000002501441,-80.04999692322777]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAAeCAYAAACfWhZxAAAFUUlEQVRYheWYTYhlVxHHf3XOuV/v9XvdzXScTEacgBhQiXsRQURxVlkIgmtXIkSxFfGDBMZIJgmxURdxK66zctWCriSLbJSQ6RmHKJkJwozdycx0533cj3OqXNzXnYxjyJiY9NhdcLmf3Ht+519Vp+rCMbPPPLph7rAHcRh2LKHlsAfwYdrD394w3HFT2oEeN2h1cCyVtqMe0A89f87O/OYp2z//9Pc3DCAc3pA+eGumOUw8n3hiw7Ip0PXXj6x7n/ntk0bt8bXDtSDdW/eOJPRDz58zTKBzSCeIgXnQrL9/JKFDSABIAtcBBhbg0lPrAkcQ+pE/fcucGNY5/NzhGxAFfVv2OlLQj7/8iJkJbReQuSfMwUVA4PJP1w8WqyMD/ctLX7Rr9TLXpyPqvZJ81+HnvYtfenL9ttX5/37JevHKGbvQnObCbI1X9tbY3hkT3giEKfgWXv7F+h3lyD0P/dLV07biE8sSGLkKf+qVA4gXr5yxV7s1Ls9P8dLNB7i6vYbfKShuCr7+z8Bwj3RZX/jjup2sJnx8uMNH8l0G0lK6jsq13OffZOxqxi4yFGFuxkQ919KI7TjmL9MH+fON01y9vobtFJSvO8IELrwDMByS0p/88YbFCtrVhD/R0KVdRAzEUBOSOBrNSOZQE25JReEihUQ6c0y05LVuja3JA2zdOMW1nWVku6S4Kfz1Z+8Mu2+HAh0rSJVhheKzBGJ4UTChs4CpoAjJHF4UjyICZsJeKtluxrw2W+XKrVX2Xh8RbgT8TAjzu/t+ADj70UcN58B7MANViAmbztBZ/yYpC9zyGAZl/1wXoW7Y/Mev7ipEPvu1Z2160lGfgHas6DDhykjwCSeGmqO1wFRzzBy1ZsxSTjJBTWjNM485bzQDdqZL7O0O0Js5xS2P6+DyuXdX+DZonOthUwI1wLCmxeoGix0uL3BliY2HpOUBmjskGn7ecnbwA2M6x+qmnxznoMghz7Glkm51wPxkzuR+R30ftCsKo4jPE873CnbJM40Zs5gxTxm1emaxYLetqGOgVc+0zZnVOfU0h72M8KYnayDM4OIzdw/8FrTRAxtgxub15wTgy+HrBiBFDktD0riiXcnRXEDANRlhXOInA1zdgSrmBC0yrMxoRxn1icB8TXrgExGGkayMiOs7PjOhjYHfff45+eoL37Q2BuYpMG0L9uqCtgvE1qPzRcExcYQawgS2fv7fwf4btEJSADb/+WsB+MryN8zaDgkBGVbYoEALj2ZCyh0aQApIhRAKh29z1AsWhFh5YuXoBkI7hmYF2mWFSnHBMAQUTIXOhJT6Gmnr+v0AxOSJtYfF5hshdIJvIExh69n3BrtvcvZj3zFS6mPUwGLs3R0gRhBBVpfR1SW6lZJuFEiFI+WCAU7BNwoKqRRiKXRLQqwgDiAuGWmgMEiIV8zof18sfmGY9hOAgewfR4frhDATXNMXGReffn+gb7eADxwksZj6JHYwJbJIbiBquFbxc8VFwzeC+t7NMdBciJXQDYVuCKmCWBmpMCxTxEBbj8QFmIA5Q0ygEyQJru33kuBvP/nfQd4JXeYAbF46L2cfXDdJCVPtE5pzSPBgitQdAZBOscxh3qGZoMFhuSyOBfVgrt/2K3uJAkmQKL2a1gstDlBwsQf++w8/ONDboLUIaN6H9uaVjT6eP/Ujk6i9GsFjecCCR0uPZq4HXcRvyoRU9G6dir5vvaONsV5d0V7JV7/7vUOtBIMWgTjKb7v4+4vn5Uufe8LUOywImrk+K+e9S2u+UDVwAJvyRaN+/sNR6/1Y0EFGN7qzMPvDC4/d84N/r/YvbP1/dRxvbJYAAAAASUVORK5CYII=",[[25.69999920880353,-83.15000002501441],[24.30000079119646,-80.04999692322777]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #F2E51D 1.76468014301047%, #A3DA36 13.5293939451611%, #5BC863 25.2941077473119%, #28AE7F 37.0588215494625%, #1F928C 48.8235353516132%, #2A768E 60.5882491537638%, #37598C 72.3529629559144%, #443781 84.1176767580652%, #471063 95.8823905602159%, #440154 "],"labels":["28.4","28.2","28.0","27.8","27.6","27.4","27.2","27.0","26.8"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"analysed_sst|2025-05-11 12:00:00","extra":{"p_1":0.01764680143010472,"p_n":0.9588239056021586},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.30000079119646,25.69999920880353],"lng":[-83.15000002501441,-80.04999692322777]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <div class="section level2">
@@ -223,7 +236,7 @@ Form</a></li>
 <span><span class="co">#&gt;  Base URL: https://coastwatch.noaa.gov/erddap </span></span>
 <span><span class="co">#&gt;  Dataset Type: griddap </span></span>
 <span><span class="co">#&gt;  Dimensions (range):  </span></span>
-<span><span class="co">#&gt;      time: (2010-06-03T12:00:00Z, 2025-05-07T12:00:00Z) </span></span>
+<span><span class="co">#&gt;      time: (2010-06-03T12:00:00Z, 2025-05-13T12:00:00Z) </span></span>
 <span><span class="co">#&gt;      altitude: (0.0, 0.0) </span></span>
 <span><span class="co">#&gt;      latitude: (-89.875, 89.875) </span></span>
 <span><span class="co">#&gt;      longitude: (-179.875, 179.875) </span></span>
@@ -245,20 +258,20 @@ Form</a></li>
 <span></span>
 <span><span class="co"># let's limit to the most recent 10 times</span></span>
 <span><span class="op">(</span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "2025-04-10 12:00:00 UTC" "2025-04-13 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [3] "2025-04-16 12:00:00 UTC" "2025-04-19 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [5] "2025-04-22 12:00:00 UTC" "2025-04-25 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [7] "2025-04-28 12:00:00 UTC" "2025-05-01 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [9] "2025-05-04 12:00:00 UTC" "2025-05-07 12:00:00 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "2025-04-16 12:00:00 UTC" "2025-04-19 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2025-04-22 12:00:00 UTC" "2025-04-25 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2025-04-28 12:00:00 UTC" "2025-05-01 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2025-05-04 12:00:00 UTC" "2025-05-07 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2025-05-10 12:00:00 UTC" "2025-05-13 12:00:00 UTC"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="extract-dataset-from-aoi-1">Extract dataset from AoI<a class="anchor" aria-label="anchor" href="#extract-dataset-from-aoi-1"></a>
 </h3>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_timeseries.csv"</span><span class="op">)</span></span>
-<span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_raster.tif"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_timeseries.csv"</span><span class="op">)</span></span>
+<span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_raster.tif"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/ed_extract.html">ed_extract</a></span><span class="op">(</span></span>
+<span><span class="op">(</span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_extract.html">ed_extract</a></span><span class="op">(</span></span>
 <span>  ed        <span class="op">=</span> <span class="va">ed</span>,</span>
 <span>  var       <span class="op">=</span> <span class="va">var</span>,</span>
 <span>  sf_zones  <span class="op">=</span> <span class="va">aoi</span>,</span>
@@ -267,9 +280,22 @@ Form</a></li>
 <span>  zonal_csv <span class="op">=</span> <span class="va">d_csv</span>,</span>
 <span>  rast_tif  <span class="op">=</span> <span class="va">r_tif</span>,</span>
 <span>  time_min  <span class="op">=</span> <span class="va">times</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
-<span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Downloading 1 requests, up to 1282 time slices each</span></span>
-<span><span class="co">#&gt; Fetching request 1 of 1 (2025-04-10 to 2025-05-07) ~ 11:19:23 UTC</span></span></code></pre></div>
+<span><span class="co">#&gt; Fetching request 1 of 1 (2025-04-16 to 2025-05-13) ~ 18:39:55 UTC</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt;    nms   lyr                      mean time               </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS sss|2025-04-16 12:00:00  36.7 2025-04-16 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS sss|2025-04-19 12:00:00  37.0 2025-04-19 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS sss|2025-04-22 12:00:00  36.1 2025-04-22 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS sss|2025-04-25 12:00:00  36.9 2025-04-25 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS sss|2025-04-28 12:00:00  34.8 2025-04-28 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS sss|2025-05-01 12:00:00  36.7 2025-05-01 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS sss|2025-05-04 12:00:00  38.0 2025-05-04 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS sss|2025-05-07 12:00:00  36.3 2025-05-07 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS sss|2025-05-10 12:00:00  36.5 2025-05-10 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS sss|2025-05-13 12:00:00  35.7 2025-05-13 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plot-time-series-1">Plot time series<a class="anchor" aria-label="anchor" href="#plot-time-series-1"></a>
@@ -280,16 +306,16 @@ Form</a></li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt;   nms   lyr                      mean time               </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS sss|2025-04-10 12:00:00  37.4 2025-04-10 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS sss|2025-04-13 12:00:00  38.2 2025-04-13 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS sss|2025-04-16 12:00:00  36.7 2025-04-16 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS sss|2025-04-19 12:00:00  37.0 2025-04-19 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS sss|2025-04-22 12:00:00  36.1 2025-04-22 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS sss|2025-04-25 12:00:00  36.9 2025-04-25 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS sss|2025-04-16 12:00:00  36.7 2025-04-16 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS sss|2025-04-19 12:00:00  37.0 2025-04-19 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS sss|2025-04-22 12:00:00  36.1 2025-04-22 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS sss|2025-04-25 12:00:00  36.9 2025-04-25 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS sss|2025-04-28 12:00:00  34.8 2025-04-28 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS sss|2025-05-01 12:00:00  36.7 2025-05-01 <span style="color: #949494;">12:00:00</span></span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_ts.html">plot_ts</a></span><span class="op">(</span><span class="va">d</span>, label <span class="op">=</span> <span class="st">"Surface Salinity (PSU)"</span><span class="op">)</span></span></code></pre></div>
 <div class="dygraphs html-widget html-fill-item" id="htmlwidget-febe03efa1a2d8d52a86" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Salinity (PSU)","labels":["week","Surface Salinity (PSU)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Salinity (PSU)":{"axis":"y"}}},"scale":"weekly","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-04-10T12:00:00.000Z","2025-04-13T12:00:00.000Z","2025-04-16T12:00:00.000Z","2025-04-19T12:00:00.000Z","2025-04-22T12:00:00.000Z","2025-04-25T12:00:00.000Z","2025-04-28T12:00:00.000Z","2025-05-01T12:00:00.000Z","2025-05-04T12:00:00.000Z","2025-05-07T12:00:00.000Z"],[37.39157568631125,38.21975481942998,36.69145395316158,36.9902341924268,36.05400322818035,36.90639361115785,34.75170840041279,36.66754053286623,38.0355339050293,36.26657966352281]]},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Salinity (PSU)","labels":["week","Surface Salinity (PSU)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Salinity (PSU)":{"axis":"y"}}},"scale":"weekly","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-04-16T12:00:00.000Z","2025-04-19T12:00:00.000Z","2025-04-22T12:00:00.000Z","2025-04-25T12:00:00.000Z","2025-04-28T12:00:00.000Z","2025-05-01T12:00:00.000Z","2025-05-04T12:00:00.000Z","2025-05-07T12:00:00.000Z","2025-05-10T12:00:00.000Z","2025-05-13T12:00:00.000Z"],[36.69145395316158,36.9902341924268,36.05400322818035,36.90639361115785,34.75170840041279,36.66754053286623,38.0355339050293,36.26657966352281,36.50064803953257,35.66861073198866]]},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3 id="map-raster-1">Map raster<a class="anchor" aria-label="anchor" href="#map-raster-1"></a>
@@ -297,16 +323,16 @@ Form</a></li>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="va">r_tif</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "sss|2025-04-10 12:00:00" "sss|2025-04-13 12:00:00"</span></span>
-<span><span class="co">#&gt;  [3] "sss|2025-04-16 12:00:00" "sss|2025-04-19 12:00:00"</span></span>
-<span><span class="co">#&gt;  [5] "sss|2025-04-22 12:00:00" "sss|2025-04-25 12:00:00"</span></span>
-<span><span class="co">#&gt;  [7] "sss|2025-04-28 12:00:00" "sss|2025-05-01 12:00:00"</span></span>
-<span><span class="co">#&gt;  [9] "sss|2025-05-04 12:00:00" "sss|2025-05-07 12:00:00"</span></span>
+<span><span class="co">#&gt;  [1] "sss|2025-04-16 12:00:00" "sss|2025-04-19 12:00:00"</span></span>
+<span><span class="co">#&gt;  [3] "sss|2025-04-22 12:00:00" "sss|2025-04-25 12:00:00"</span></span>
+<span><span class="co">#&gt;  [5] "sss|2025-04-28 12:00:00" "sss|2025-05-01 12:00:00"</span></span>
+<span><span class="co">#&gt;  [7] "sss|2025-05-04 12:00:00" "sss|2025-05-07 12:00:00"</span></span>
+<span><span class="co">#&gt;  [9] "sss|2025-05-10 12:00:00" "sss|2025-05-13 12:00:00"</span></span>
 <span></span>
 <span><span class="va">lyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plet.html" class="external-link">plet</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">lyr</span><span class="op">]</span>, tiles <span class="op">=</span> <span class="st">"Esri.OceanBasemap"</span><span class="op">)</span></span></code></pre></div>
 <div class="leaflet html-widget html-fill-item" id="htmlwidget-1fb4450895fe099f74a1" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-1fb4450895fe099f74a1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAGCAYAAAAYLBS/AAAAMUlEQVQYlWNgGNxAu6jvPwMDA4MLY8h/F8um/7Sz6e9z1f8MDAwMrVc8/ytO6CXKJgC6gw2n/U+1HgAAAABJRU5ErkJggg==",[[25.75,-83.25],[24.24999999999999,-80]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #C6E020 8.29979887603129%, #7FD34D 19.1482440966464%, #43BE70 29.9966893172615%, #21A585 40.8451345378766%, #228C8D 51.6935797584917%, #2C718E 62.5420249791068%, #39558C 73.3904701997219%, #443681 84.238915420337%, #471366 95.0873606409521%, #440154 "],"labels":["38.5","38.0","37.5","37.0","36.5","36.0","35.5","35.0","34.5"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"sss|2025-04-10 12:00:00","extra":{"p_1":0.0829979887603129,"p_n":0.9508736064095211},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.24999999999999,25.75],"lng":[-83.25,-80]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1fb4450895fe099f74a1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAGCAYAAAAYLBS/AAAAMUlEQVQYlWNgGNzg73PV/wwMDAxWQd3/Nar7/tPOJpvdJf8ZGBgYjJN6/7swhhBlEwBZyw1yc+iTOwAAAABJRU5ErkJggg==",[[25.75,-83.25],[24.24999999999999,-80]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #F3E61E 1.44940882340303%, #ABDC30 12.3726444085857%, #66CB5C 23.2958799937688%, #32B57A 34.2191155789519%, #1E9C89 45.1423511641345%, #26818E 56.0655867493176%, #30678E 66.9888223345003%, #3E4989 77.9120579196833%, #482878 88.8352935048664%, #440255 99.7585290900491%, #440154 "],"labels":["38.0","37.8","37.6","37.4","37.2","37.0","36.8","36.6","36.4","36.2"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"sss|2025-04-16 12:00:00","extra":{"p_1":0.01449408823403031,"p_n":0.997585290900491},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.24999999999999,25.75],"lng":[-83.25,-80]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
