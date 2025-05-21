@@ -668,12 +668,14 @@ ed_vars <- function(ed){
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
 #' (vars <- ed_vars(ed))
 #' ed_extract(
 #'   ed,
 #'   "analysed_sst",
 #'   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5))
+#' }
 ed_extract <- function(
     ed,
     var,
