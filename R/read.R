@@ -663,7 +663,7 @@ ed_vars <- function(ed){
 #' @import sf rerddap
 #' @importFrom terra crop ext ncell rast subset trim values
 #' @importFrom readr read_csv
-#' @importFrom fs file_delete file_move
+#' @importFrom fs file_exists file_delete file_move
 #' @concept read
 #' @export
 #'
@@ -977,10 +977,10 @@ ed_extract <- function(
   #       opacity = 0.5))
 
   # browser() # DEBUG
-  if (file_exists(rast_tif)){
+  if (fs::file_exists(rast_tif)){
     r_tmp_tif <- tempfile(fileext = ".tif")
     r_tmp <- c(rast(rast_tif), r)                            # merge layers old and new
-    r_tmp <- subset(r_tmp, which(!duplicated(names(r_tmp)))) # rm duplicates
+    r_tmp <- terra::subset(r_tmp, which(!duplicated(names(r_tmp)))) # rm duplicates
     terra::writeRaster(r_tmp, r_tmp_tif)
     fs::file_delete(rast_tif)
     fs::file_move(r_tmp_tif, rast_tif)
