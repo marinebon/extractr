@@ -1,3 +1,9 @@
+# extractr 0.1.8
+
+* For `ed_extract()` instead of invisibly returning, made data frame output
+  from zonal summary.
+* Swapped example `ed_extract()` to working ERDDAP URL.
+
 # extractr 0.1.7
 
 * Fixed `ed_extract()` from wiping other time slices in the TIF, eg if `time_min` 
