@@ -659,7 +659,8 @@ ed_vars <- function(ed){
 #' Default: FALSE.
 #' @param ...  arguments to pass along to `rerddap::griddap()`, such as to
 #' filter the request by dimensions
-#' @return invisible first argument (`ed` object), since called for side effects
+#' @return data frame of the zonal summary of the raster (optionally also
+#' written to zonal_csv)
 #' @import sf rerddap
 #' @importFrom terra crop ext ncell rast subset trim values
 #' @importFrom readr read_csv
@@ -668,21 +669,23 @@ ed_vars <- function(ed){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+#' ed <- ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html")
 #' (vars <- ed_vars(ed))
+#' dims <- ed_dims(ed)
+#' times = tail(dims$time, 10)
 #' ed_extract(
 #'   ed,
 #'   "analysed_sst",
-#'   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5))
-#' }
+#'   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5),
+#'   time_min = min(times),
+#'   time_max = max(times) )
 ed_extract <- function(
     ed,
     var,
     sf_zones  = NULL,
     fld_zones = NULL,
     bbox      = NULL,
-    zonal_csv,
+    zonal_csv = NULL,
     zonal_fun = "mean",
     rast_tif  = NULL,
     mask_tif  = TRUE,
@@ -979,71 +982,73 @@ ed_extract <- function(
   #       opacity = 0.5))
 
   # browser() # DEBUG
-  if (fs::file_exists(rast_tif)){
-    r_tmp_tif <- tempfile(fileext = ".tif")
-    r_tmp <- c(rast(rast_tif), r)                            # merge layers old and new
-    r_tmp <- terra::subset(r_tmp, which(!duplicated(names(r_tmp)))) # rm duplicates
-    terra::writeRaster(r_tmp, r_tmp_tif)
-    fs::file_delete(rast_tif)
-    fs::file_move(r_tmp_tif, rast_tif)
-    rm(r); rm(r_tmp)
-  } else {
-    terra::writeRaster(r, rast_tif, overwrite = T, gdal=c("COMPRESS=DEFLATE"))
+  if (!is.null(rast_tif)){
+    if (fs::file_exists(rast_tif)){
+      r_tmp_tif <- tempfile(fileext = ".tif")
+      r_tmp <- c(rast(rast_tif), r)                            # merge layers old and new
+      r_tmp <- terra::subset(r_tmp, which(!duplicated(names(r_tmp)))) # rm duplicates
+      terra::writeRaster(r_tmp, r_tmp_tif)
+      fs::file_delete(rast_tif)
+      fs::file_move(r_tmp_tif, rast_tif)
+      rm(r); rm(r_tmp)
+    } else {
+      terra::writeRaster(r, rast_tif, overwrite = T, gdal=c("COMPRESS=DEFLATE"))
+    }
+    # fs::file_delete(ncs)
+    r <- terra::rast(rast_tif)
   }
-  fs::file_delete(ncs)
 
-  r <- terra::rast(rast_tif)
 
-  d_r <- terra::zonal(
-    x          = r,
-    z          = terra::vect(
-      sf_zones |>
-        dplyr::select(dplyr::all_of(fld_zones))),
-    fun         = zonal_fun,
-    exact       = T,
-    na.rm       = T,
-    as.polygons = T) |>
-    sf::st_as_sf() |>
-    sf::st_drop_geometry() |>
-    tidyr::pivot_longer(
-      cols      = -dplyr::any_of(fld_zones),
-      names_to  = "lyr",
-      values_to = zonal_fun) |>
-    mutate(
-      time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
-        readr::parse_datetime())
+    d_r <- terra::zonal(
+      x          = r,
+      z          = terra::vect(
+        sf_zones |>
+          dplyr::select(dplyr::all_of(fld_zones))),
+      fun         = zonal_fun,
+      exact       = T,
+      na.rm       = T,
+      as.polygons = T) |>
+      sf::st_as_sf() |>
+      sf::st_drop_geometry() |>
+      tidyr::pivot_longer(
+        cols      = -dplyr::any_of(fld_zones),
+        names_to  = "lyr",
+        values_to = zonal_fun) |>
+      mutate(
+        time = str_replace(lyr, glue("{var}\\|(.*)"), "\\1") |>
+          readr::parse_datetime())
 
-  # Merge with existing data if available
-  # if (!is.null(existing_data)) {
-  #   # Remove any duplicate entries (same time and zone) from existing data
-  #   # that match the new data to ensure any duplicates are overwritten
-  #   if (!is.null(fld_zones) && length(fld_zones) > 0) {
-  #     # If we have zone fields, remove duplicates by time and zone fields
-  #     existing_filtered <- dplyr::anti_join(
-  #       existing_data,
-  #       d_r,
-  #       by = c("time", fld_zones))
-  #   } else {
-  #     # Otherwise just use time
-  #     existing_filtered <- dplyr::anti_join(
-  #       existing_data,
-  #       d_r,
-  #       by = "time")
-  #   }
-  #
-  #   # Combine filtered existing data with new data
-  #   d_r <- dplyr::bind_rows(existing_filtered, d_r) |>
-  #     dplyr::arrange(time)
-  #
-  #   if (verbose)
-  #     message(glue::glue("Merged {nrow(d_r) - nrow(existing_filtered)} new rows with {nrow(existing_filtered)} existing rows in {basename(zonal_csv)}"))
-  # }
-
-  write_csv(d_r, zonal_csv)
+    # Merge with existing data if available
+    # if (!is.null(existing_data)) {
+    #   # Remove any duplicate entries (same time and zone) from existing data
+    #   # that match the new data to ensure any duplicates are overwritten
+    #   if (!is.null(fld_zones) && length(fld_zones) > 0) {
+    #     # If we have zone fields, remove duplicates by time and zone fields
+    #     existing_filtered <- dplyr::anti_join(
+    #       existing_data,
+    #       d_r,
+    #       by = c("time", fld_zones))
+    #   } else {
+    #     # Otherwise just use time
+    #     existing_filtered <- dplyr::anti_join(
+    #       existing_data,
+    #       d_r,
+    #       by = "time")
+    #   }
+    #
+    #   # Combine filtered existing data with new data
+    #   d_r <- dplyr::bind_rows(existing_filtered, d_r) |>
+    #     dplyr::arrange(time)
+    #
+    #   if (verbose)
+    #     message(glue::glue("Merged {nrow(d_r) - nrow(existing_filtered)} new rows with {nrow(existing_filtered)} existing rows in {basename(zonal_csv)}"))
+    # }
+  if (!is.null(zonal_csv))
+    write_csv(d_r, zonal_csv)
 
   if (!keep_nc)
     unlink(dir_nc, recursive = T)
 
-  return(invisible(ed))
+  return(d_r)
 }
 

@@ -97,7 +97,7 @@ names(dims)
 d_csv <- here("data_tmp/sst_timeseries.csv")
 r_tif <- here("data_tmp/sst_raster.tif")
 
-ed_extract(
+(d <- ed_extract(
   ed        = ed,
   var       = var,
   sf_zones  = aoi,
@@ -106,7 +106,7 @@ ed_extract(
   zonal_csv = d_csv,
   rast_tif  = r_tif,
   time_min  = times[1],
-  verbose   = TRUE)
+  verbose   = TRUE))
 ```
 
 ### Plot time series
@@ -171,7 +171,7 @@ names(dims)
 d_csv <- here("data_tmp/sss_timeseries.csv")
 r_tif <- here("data_tmp/sss_raster.tif")
 
-ed_extract(
+(d <- ed_extract(
   ed        = ed,
   var       = var,
   sf_zones  = aoi,
@@ -180,7 +180,7 @@ ed_extract(
   zonal_csv = d_csv,
   rast_tif  = r_tif,
   time_min  = times[1],
-  verbose   = TRUE)
+  verbose   = TRUE))
 ```
 
 ### Plot time series

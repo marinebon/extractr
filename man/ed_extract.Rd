@@ -10,7 +10,7 @@ ed_extract(
   sf_zones = NULL,
   fld_zones = NULL,
   bbox = NULL,
-  zonal_csv,
+  zonal_csv = NULL,
   zonal_fun = "mean",
   rast_tif = NULL,
   mask_tif = TRUE,
@@ -73,7 +73,8 @@ Default: FALSE.}
 filter the request by dimensions}
 }
 \value{
-invisible first argument (\code{ed} object), since called for side effects
+data frame of the zonal summary of the raster (optionally also
+written to zonal_csv)
 }
 \description{
 Extract data from ERDDAP dataset by bounding box and/or polygon. This function
@@ -88,11 +89,15 @@ minimizing the number of requests.
 }
 }
 \examples{
-ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
+ed <- ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html")
 (vars <- ed_vars(ed))
+dims <- ed_dims(ed)
+times = tail(dims$time, 10)
 ed_extract(
   ed,
   "analysed_sst",
-  bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5))
+  bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5),
+  time_min = min(times),
+  time_max = max(times) )
 }
 \concept{read}
