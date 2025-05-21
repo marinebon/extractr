@@ -89,6 +89,7 @@ minimizing the number of requests.
 }
 }
 \examples{
+\dontrun{
 ed <- ed_info("https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html")
 (vars <- ed_vars(ed))
 dims <- ed_dims(ed)
@@ -99,5 +100,6 @@ ed_extract(
   bbox = c(xmin = -83.0, ymin = 27.3, xmax = -81.8, ymax= 28.5),
   time_min = min(times),
   time_max = max(times) )
+}
 }
 \concept{read}
