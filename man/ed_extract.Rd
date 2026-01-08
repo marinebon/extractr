@@ -20,6 +20,7 @@ ed_extract(
   n_max_retries = 3,
   time_min = NULL,
   time_max = NULL,
+  xy_tolerance = 1e-04,
   verbose = FALSE,
   ...
 )
@@ -29,7 +30,7 @@ ed_extract(
 
 \item{var}{variable to extract}
 
-\item{sf_zones}{spatial feature object (\code{\link{sf}}) with zones to extract zonal
+\item{sf_zones}{spatial feature object (\code{\link[sf:sf]{sf::sf}}) with zones to extract zonal
 statistics from ERDDAP gridded data. If \code{sf_zones} is left
 to the default \code{NULL} value, then the \code{bbox} is used.}
 
@@ -64,6 +65,9 @@ server}
 \item{time_min}{minimum time to extract from ERDDAP dataset}
 
 \item{time_max}{maximum time to extract from ERDDAP dataset}
+
+\item{xy_tolerance}{tolerance to use when aligning raster and vector data.
+Default: 0.0001}
 
 \item{verbose}{display messages on status of function. Useful for debugging
 or showing status while getting data from a wide range and/or big polygon.

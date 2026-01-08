@@ -654,6 +654,8 @@ ed_vars <- function(ed){
 #' server
 #' @param time_min minimum time to extract from ERDDAP dataset
 #' @param time_max maximum time to extract from ERDDAP dataset
+#' @param xy_tolerance tolerance to use when aligning raster and vector data.
+#' Default: 0.0001
 #' @param verbose display messages on status of function. Useful for debugging
 #' or showing status while getting data from a wide range and/or big polygon.
 #' Default: FALSE.
@@ -697,6 +699,7 @@ ed_extract <- function(
     n_max_retries      = 3,
     time_min  = NULL,
     time_max  = NULL,
+    xy_tolerance = 0.0001,
     verbose   = FALSE,
     ...){
   # TODO: append to tif if exists
@@ -799,16 +802,43 @@ ed_extract <- function(
 
   # TODO: check for irregular grid and use terra::rasterize to regularize grid values
   #       - [How to make RASTER from irregular point data without interpolation](https://gis.stackexchange.com/questions/79062/how-to-make-raster-from-irregular-point-data-without-interpolation)
-  # diff(dims$longitude) |> range() # 0.125  0.125
-  # diff(dims$latitude) |> range()  # 0.1082 0.1250
+  # diff(dims$longitude) |> range() #   0.09999  0.10001
+  # diff(dims$latitude) |> range()  # -0.100005 -0.099995
 
-  r_na <- expand.grid(
-    longitude = dims$longitude,
-    latitude  = dims$latitude,
-    value     = NA) |>
-    terra::rast(
-      type = "xyz",
-      crs  = wgs84)
+  # browser()
+  x_diff <- diff(sort(dims$longitude)) |> range() |> diff()
+  y_diff <- diff(sort(dims$latitude)) |> range() |> diff()
+  if (x_diff > xy_tolerance | y_diff > xy_tolerance){
+    stop(glue(
+      "ERDDAP dataset appears to have an irregular grid:
+      - longitude diff range: {paste(round(range(diff(dims$longitude)), 7), collapse = ' to ')};
+      - latitude diff range: {paste(round(range(diff(dims$latitude)), 7), collapse = ' to ')}.
+      Please regularize the grid or increase the xy_tolerance before using `ed_extract()`."))
+  } # 2e-05
+
+  # browser()
+
+  if (x_diff == 0 & y_diff == 0){
+    r_na <- expand.grid(
+      longitude = dims$longitude,
+      latitude  = dims$latitude,
+      value     = NA) |>
+      terra::rast(
+        type = "xyz",
+        crs  = wgs84)
+  } else {
+    dx <- diff(sort(dims$longitude)) |> mean()
+    dy <- diff(sort(dims$latitude)) |> mean()
+
+    r_na <- terra::rast(
+      nrows = length(dims$latitude),
+      ncols = length(dims$longitude),
+      xmin  = min(dims$longitude) - dx/2,
+      xmax  = max(dims$longitude) + dx/2,
+      ymin  = min(dims$latitude)  - dy/2,
+      ymax  = max(dims$latitude)  + dy/2,
+      crs   = wgs84)
+  }
   # TODO: check assumption of grid Geographic CRS
 
   if (terra::ext(r_na)[2] > 180){
@@ -847,6 +877,8 @@ ed_extract <- function(
     message(glue("Downloading {n_reqs} requests, up to {n_t_per_req} time slices each"))
 
   i_req <- 1
+
+  browser()
 
   while (i_req <= n_reqs) {
 

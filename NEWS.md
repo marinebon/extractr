@@ -1,3 +1,8 @@
+# extractr 0.1.9
+
+* Added parameter `xy_tolerance` to `ed_extract()` to set tolerance for matching points
+  to raster cells when extracting zonal statistics. Default is `0.0001` degrees.
+
 # extractr 0.1.8
 
 * For `ed_extract()` instead of invisibly returning, made data frame output

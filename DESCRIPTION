@@ -1,6 +1,6 @@
 Package: extractr
 Title: Extract data from online dataset APIs
-Version: 0.1.8
+Version: 0.1.9
 URL: https://marinebon.github.io/extractr, https://github.com/marinebon/extractr, https://marinebon.github.io/extractr/
 BugReports: https://github.com/marinebon/extractr/issues
 Authors@R: 
@@ -14,7 +14,7 @@ Description: Extract data from online dataset APIs, such as ERDDAP, STAC,
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Suggests: 
     knitr,
     rmarkdown
