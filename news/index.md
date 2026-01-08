@@ -1,0 +1,116 @@
+# Changelog
+
+## extractr 0.1.9
+
+- Added parameter `xy_tolerance` to
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  to set tolerance for matching points to raster cells when extracting
+  zonal statistics. Default is `0.0001` degrees.
+
+## extractr 0.1.8
+
+- For
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  instead of invisibly returning, made data frame output from zonal
+  summary.
+- Swapped example
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  to working ERDDAP URL.
+
+## extractr 0.1.7
+
+- Fixed
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  from wiping other time slices in the TIF, eg if `time_min` is set to a
+  later date than what already exists in the `rast_tif`. The function
+  now preserves existing raster layers in the raster and only adds new
+  ones by removing duplicate layers before writing.
+
+## extractr 0.1.6
+
+- Fixed
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  from wiping other time slices in the CSV, eg if `time_min` is set to a
+  later date than what already exists in the `zonal_csv`. The function
+  now preserves existing CSV data and only adds new dates by removing
+  duplicate rows before writing.
+
+## extractr 0.1.5
+
+- Added params to
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  documentation: `keep_nc`, `n_max_vals_per_req`, `n_max_retries`,
+  `time_min`, `time_max`, `verbose`.
+
+- The
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  function now returns invisible first argument `ed`, per [6 Functions
+  \| Advanced R](https://adv-r.hadley.nz/functions.html#invisible).
+
+- Updated pkgdown to bootstrap 5 with Reference sections.
+
+- Fix removal of temporary `*_nc` folders from
+  [`ed_extract()`](https://marinebon.github.io/extractr/reference/ed_extract.md)
+  if `keep_nc = FALSE`.
+
+## extractr 0.1.4
+
+- Added new function
+  [`check_url()`](https://marinebon.github.io/extractr/reference/check_url.md)
+  to
+  [`ed_info()`](https://marinebon.github.io/extractr/reference/ed_info.md)
+  to check if the ERDDAP server is valid and working, since running
+  `rerddap::info(dataset, url = ed_url)` on offline ERDDAP crashes R.
+
+- Fixed [\#8](https://github.com/marinebon/extractr/issues/8) with check
+  for extra dimensions.
+
+- Updated vignette to use datasets:
+
+  - [ERDDAP - Sea Surface Temperature, NOAA Coral Reef Watch Daily
+    Global 5km Satellite SST (CoralTemp), 1985-present, Daily - Data
+    Access
+    Form](https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html)
+  - [ERDDAP - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global
+    0.25°, 2010-present, 3 Day Composite - Data Access
+    Form](https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html)
+
+## extractr 0.1.3
+
+- Modified
+  [`plot_ts()`](https://marinebon.github.io/extractr/reference/plot_ts.md)
+  so first argument could either be path to CSV or data frame.
+
+## extractr 0.1.2
+
+- Fixed arguments in
+  [`rerddap::griddap()`](https://docs.ropensci.org/rerddap/reference/griddap.html)
+  for rerddap version `1.0.3`: `x` to `datasetx`; `time` with
+  [`as.character()`](https://rdrr.io/r/base/character.html). Fixed
+  article outputs.
+
+## extractr 0.1.1
+
+- Fix `get_ed_raster()`,
+  [`grds_to_ts()`](https://marinebon.github.io/extractr/reference/grds_to_ts.md)
+  so working with
+  [noaa-onms/climate-dashboard](https://github.com/noaa-onms/climate-dashboard)
+  ed_var = “CRW_SST” coral reef watch
+
+## extractr 0.1.0
+
+- Added a `NEWS.md` file to track changes to the package.
+
+- Added
+  [`grds_to_ts()`](https://marinebon.github.io/extractr/reference/grds_to_ts.md)
+  for continuous,
+  [`grds_to_ts_cat()`](https://marinebon.github.io/extractr/reference/grds_to_ts_cat.md)
+  for categorical (from
+  [seascapeR](https://marinebon.github.io/seascapeR/))
+
+- Cleaned up
+  [`get_ed_grds()`](https://marinebon.github.io/extractr/reference/get_ed_grds.md)
+
+- Added
+  [`plot_ts()`](https://marinebon.github.io/extractr/reference/plot_ts.md)
+  to plot timeseries

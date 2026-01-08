@@ -25,7 +25,7 @@ Preserve intermediary NetCDF and/or GeoTIFF files for raster visualization.
 
     <a class="navbar-brand me-2" href="../index.html">extractr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,7 @@ minimizing the number of requests.</p></li>
 <span>  n_max_retries <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  time_min <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  time_max <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  xy_tolerance <span class="op">=</span> <span class="fl">1e-04</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -98,7 +99,7 @@ minimizing the number of requests.</p></li>
 
 
 <dt id="arg-sf-zones">sf_zones<a class="anchor" aria-label="anchor" href="#arg-sf-zones"></a></dt>
-<dd><p>spatial feature object (<code>sf</code>) with zones to extract zonal
+<dd><p>spatial feature object (<code><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">sf::sf</a></code>) with zones to extract zonal
 statistics from ERDDAP gridded data. If <code>sf_zones</code> is left
 to the default <code>NULL</code> value, then the <code>bbox</code> is used.</p></dd>
 
@@ -159,6 +160,11 @@ server</p></dd>
 <dd><p>maximum time to extract from ERDDAP dataset</p></dd>
 
 
+<dt id="arg-xy-tolerance">xy_tolerance<a class="anchor" aria-label="anchor" href="#arg-xy-tolerance"></a></dt>
+<dd><p>tolerance to use when aligning raster and vector data.
+Default: 0.0001</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>display messages on status of function. Useful for debugging
 or showing status while getting data from a wide range and/or big polygon.
@@ -201,7 +207,7 @@ written to zonal_csv)</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
