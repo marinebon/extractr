@@ -878,7 +878,7 @@ ed_extract <- function(
 
   i_req <- 1
 
-  browser()
+  # browser()
 
   while (i_req <= n_reqs) {
 
