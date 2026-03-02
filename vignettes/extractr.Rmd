@@ -72,18 +72,30 @@ ERDDAP dataset:
 #| label: sst_ed_info
 
 ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"
+var <- "analysed_sst"
+
 (ed <- ed_info(ed_url))
 ```
 
 ### Get dimensions
 
 ```{r}
+#| label: sst_ed_dims_try
+
+tryCatch({
+  dims <- ed_dims(ed)
+  names(dims)
+  times <- tail(dims[["time"]], 10)
+  print(times)
+}, error = function(e) {
+  message("Could not fetch ERDDAP time dimension: ", e$message)
+  times <- NULL
+})
+```
+
+```{r}
 #| label: sst_ed_dims
-
-var <- "analysed_sst"
-
-dims <- ed_dims(ed)
-names(dims)
+#| eval: !is.null(times)
 
 # let's limit to the most recent 10 times
 (times <- tail(dims[["time"]], 10))
@@ -93,6 +105,7 @@ names(dims)
 
 ```{r}
 #| label: sst_ed_extract
+#| eval: !is.null(times)
 
 d_csv <- here("data_tmp/sst_timeseries.csv")
 r_tif <- here("data_tmp/sst_raster.tif")
@@ -113,6 +126,7 @@ r_tif <- here("data_tmp/sst_raster.tif")
 
 ```{r}
 #| label: sst_plot_ts
+#| eval: !is.null(times)
 
 d <- read_csv(d_csv)
 head(d)
@@ -124,6 +138,7 @@ plot_ts(d, label = "Surface Temperature (ºC)")
 
 ```{r}
 #| label: sst_map_rast
+#| eval: !is.null(times)
 
 r <- rast(r_tif)
 names(r)
@@ -145,19 +160,32 @@ ERDDAP dataset:
 #| label: sss_ed_info
 
 ed_url  <- "https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html"
-ed <- ed_info(ed_url)
-ed
+var <- "sss"
+
+(ed <- ed_info(ed_url))
 ```
 
 ### Get dimensions
 
 ```{r}
+#| label: sss_ed_dims_try
+
+tryCatch({
+  dims <- ed_dims(ed)
+  names(dims)
+  times <- tail(dims[["time"]], 10)
+  print(times)
+}, error = function(e) {
+  message("Could not fetch ERDDAP time dimension: ", e$message)
+  times <- NULL
+})
+```
+
+
+
+```{r}
 #| label: sss_ed_dims
-
-var <- "sss"
-
-dims <- ed_dims(ed)
-names(dims)
+#| eval: !is.null(times)
 
 # let's limit to the most recent 10 times
 (times <- tail(dims[["time"]], 10))
@@ -167,6 +195,7 @@ names(dims)
 
 ```{r}
 #| label: sss_ed_extract
+#| eval: !is.null(times)
 
 d_csv <- here("data_tmp/sss_timeseries.csv")
 r_tif <- here("data_tmp/sss_raster.tif")
@@ -187,6 +216,7 @@ r_tif <- here("data_tmp/sss_raster.tif")
 
 ```{r}
 #| label: sss_plot_ts
+#| eval: !is.null(times)
 
 d <- read_csv(d_csv)
 head(d)
@@ -198,6 +228,7 @@ plot_ts(d, label = "Surface Salinity (PSU)")
 
 ```{r}
 #| label: sss_map_rast
+#| eval: !is.null(times)
 
 r <- rast(r_tif)
 names(r)
