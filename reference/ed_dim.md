@@ -30,7 +30,6 @@ vector of values for given dimension
 ed <- ed_info("https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html")
 ed_dim(ed, "LEV")
 #> Warning: Failed to open 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.csvp?LEV': The requested URL returned error: 500
-#> Error in open.connection(structure(4L, class = c("curl", "connection"), conn_id = <pointer: 0x55c05ea97930>),  : 
-#>   cannot open the connection
+#> Error : cannot open the connection
 #> Error in ed_dim(ed, "LEV"): Problem fetching dimension LEV from ERDDAP: https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.csvp?LEV
 ```

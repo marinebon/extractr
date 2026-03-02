@@ -113,12 +113,14 @@ Form</a></li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ed_url</span>  <span class="op">&lt;-</span> <span class="st">"https://coastwatch.noaa.gov/erddap/griddap/noaacrwsstDaily.html"</span></span>
+<span><span class="va">var</span> <span class="op">&lt;-</span> <span class="st">"analysed_sst"</span></span>
+<span></span>
 <span><span class="op">(</span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_info.html">ed_info</a></span><span class="op">(</span><span class="va">ed_url</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;ERDDAP info&gt; noaacrwsstDaily </span></span>
+<span><span class="co">#&gt; &lt;ERDDAP(TM) info&gt; noaacrwsstDaily </span></span>
 <span><span class="co">#&gt;  Base URL: https://coastwatch.noaa.gov/erddap </span></span>
 <span><span class="co">#&gt;  Dataset Type: griddap </span></span>
 <span><span class="co">#&gt;  Dimensions (range):  </span></span>
-<span><span class="co">#&gt;      time: (1985-01-01T12:00:00Z, 2026-01-07T12:00:00Z) </span></span>
+<span><span class="co">#&gt;      time: (1985-01-01T12:00:00Z, 2026-02-28T12:00:00Z) </span></span>
 <span><span class="co">#&gt;      latitude: (-89.975, 89.975) </span></span>
 <span><span class="co">#&gt;      longitude: (-179.975, 179.975) </span></span>
 <span><span class="co">#&gt;  Variables:  </span></span>
@@ -131,24 +133,33 @@ Form</a></li>
 <h3 id="get-dimensions">Get dimensions<a class="anchor" aria-label="anchor" href="#get-dimensions"></a>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">var</span> <span class="op">&lt;-</span> <span class="st">"analysed_sst"</span></span>
-<span></span>
-<span><span class="va">dims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_dims.html">ed_dims</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dims</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "time"      "latitude"  "longitude"</span></span>
-<span></span>
-<span><span class="co"># let's limit to the most recent 10 times</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">dims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_dims.html">ed_dims</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dims</span><span class="op">)</span></span>
+<span>  <span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span></span>
+<span><span class="op">}</span>, error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Could not fetch ERDDAP time dimension: "</span>, <span class="va">e</span><span class="op">$</span><span class="va">message</span><span class="op">)</span></span>
+<span>  <span class="va">times</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "2026-02-19 12:00:00 UTC" "2026-02-20 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2026-02-21 12:00:00 UTC" "2026-02-22 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2026-02-23 12:00:00 UTC" "2026-02-24 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2026-02-25 12:00:00 UTC" "2026-02-26 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2026-02-27 12:00:00 UTC" "2026-02-28 12:00:00 UTC"</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># let's limit to the most recent 10 times</span></span>
 <span><span class="op">(</span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "2025-12-29 12:00:00 UTC" "2025-12-30 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [3] "2025-12-31 12:00:00 UTC" "2026-01-01 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [5] "2026-01-02 12:00:00 UTC" "2026-01-03 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [7] "2026-01-04 12:00:00 UTC" "2026-01-05 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [9] "2026-01-06 12:00:00 UTC" "2026-01-07 12:00:00 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "2026-02-19 12:00:00 UTC" "2026-02-20 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2026-02-21 12:00:00 UTC" "2026-02-22 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2026-02-23 12:00:00 UTC" "2026-02-24 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2026-02-25 12:00:00 UTC" "2026-02-26 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2026-02-27 12:00:00 UTC" "2026-02-28 12:00:00 UTC"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="extract-dataset-from-aoi">Extract dataset from AoI<a class="anchor" aria-label="anchor" href="#extract-dataset-from-aoi"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_timeseries.csv"</span><span class="op">)</span></span>
 <span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sst_raster.tif"</span><span class="op">)</span></span>
 <span></span>
@@ -163,212 +174,57 @@ Form</a></li>
 <span>  time_min  <span class="op">=</span> <span class="va">times</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Downloading 1 requests, up to 59 time slices each</span></span>
-<span><span class="co">#&gt; Called from: ed_extract(ed = ed, var = var, sf_zones = aoi, fld_zones = "nms", </span></span>
-<span><span class="co">#&gt;     zonal_fun = "mean", zonal_csv = d_csv, rast_tif = r_tif, </span></span>
-<span><span class="co">#&gt;     time_min = times[1], verbose = TRUE)</span></span>
-<span><span class="co">#&gt; debug: while (i_req &lt;= n_reqs) {</span></span>
-<span><span class="co">#&gt;     i_t_beg &lt;- (i_req - 1) * n_t_per_req + 1</span></span>
-<span><span class="co">#&gt;     i_t_end &lt;- min(c(i_t_beg + n_t_per_req - 1, n_t))</span></span>
-<span><span class="co">#&gt;     t_req &lt;- times_todo[c(i_t_beg, i_t_end)]</span></span>
-<span><span class="co">#&gt;     t_req_str &lt;- format_ISO8601(t_req, usetz = "Z")</span></span>
-<span><span class="co">#&gt;     if (verbose) </span></span>
-<span><span class="co">#&gt;         message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt;     ncs0 &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;         ".*\\.nc$", full.names = T), size = file.size(nc)), size == </span></span>
-<span><span class="co">#&gt;         0), nc)</span></span>
-<span><span class="co">#&gt;     unlink(ncs0)</span></span>
-<span><span class="co">#&gt;     nc_retry &lt;- T</span></span>
-<span><span class="co">#&gt;     nc_n_try &lt;- 1</span></span>
-<span><span class="co">#&gt;     n_max_retries</span></span>
-<span><span class="co">#&gt;     while (nc_retry) {</span></span>
-<span><span class="co">#&gt;         res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;             url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;                 bbox[["xmax"]]), latitude = c(bbox[["ymin"]], </span></span>
-<span><span class="co">#&gt;                 bbox[["ymax"]]), time = t_req_str, fmt = "nc", </span></span>
-<span><span class="co">#&gt;             store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt;         if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;             err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;             msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;             nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;             if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;                 stop(msg)</span></span>
-<span><span class="co">#&gt;             }</span></span>
-<span><span class="co">#&gt;             else {</span></span>
-<span><span class="co">#&gt;                 message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;                 Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;             }</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;         else {</span></span>
-<span><span class="co">#&gt;             nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     i_req &lt;- i_req + 1</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: i_t_beg &lt;- (i_req - 1) * n_t_per_req + 1</span></span>
-<span><span class="co">#&gt; debug: i_t_end &lt;- min(c(i_t_beg + n_t_per_req - 1, n_t))</span></span>
-<span><span class="co">#&gt; debug: t_req &lt;- times_todo[c(i_t_beg, i_t_end)]</span></span>
-<span><span class="co">#&gt; debug: t_req_str &lt;- format_ISO8601(t_req, usetz = "Z")</span></span>
-<span><span class="co">#&gt; debug: if (verbose) message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt; debug: message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt; Fetching request 1 of 1 (2025-12-29 to 2026-01-07) ~ 19:29:31 UTC</span></span>
-<span><span class="co">#&gt; debug: ncs0 &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;     ".*\\.nc$", full.names = T), size = file.size(nc)), size == </span></span>
-<span><span class="co">#&gt;     0), nc)</span></span>
-<span><span class="co">#&gt; debug: unlink(ncs0)</span></span>
-<span><span class="co">#&gt; debug: nc_retry &lt;- T</span></span>
-<span><span class="co">#&gt; debug: nc_n_try &lt;- 1</span></span>
-<span><span class="co">#&gt; debug: n_max_retries</span></span>
-<span><span class="co">#&gt; debug: while (nc_retry) {</span></span>
-<span><span class="co">#&gt;     res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;         url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;             bbox[["xmax"]]), latitude = c(bbox[["ymin"]], bbox[["ymax"]]), </span></span>
-<span><span class="co">#&gt;         time = t_req_str, fmt = "nc", store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt;     if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;         err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;         msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;         nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;         if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;             stop(msg)</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;         else {</span></span>
-<span><span class="co">#&gt;             message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;             Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;     url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;         bbox[["xmax"]]), latitude = c(bbox[["ymin"]], bbox[["ymax"]]), </span></span>
-<span><span class="co">#&gt;     time = t_req_str, fmt = "nc", store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt; debug: if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;     err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;     msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;     nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;     if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;         stop(msg)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;         Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt; } else {</span></span>
-<span><span class="co">#&gt;     nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt; debug: (while) nc_retry</span></span>
-<span><span class="co">#&gt; debug: i_req &lt;- i_req + 1</span></span>
-<span><span class="co">#&gt; debug: (while) i_req &lt;= n_reqs</span></span>
-<span><span class="co">#&gt; debug: ncs &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;     ".*\\.nc$", full.names = T), size = file.size(nc)), size &gt; </span></span>
-<span><span class="co">#&gt;     0), nc)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::rast(ncs)</span></span>
-<span><span class="co">#&gt; debug: stopifnot(all(class(terra::time(r)) %in% c("POSIXct", "POSIXt")))</span></span>
-<span><span class="co">#&gt; debug: idx &lt;- dplyr::pull(dplyr::filter(dplyr::arrange(dplyr::tibble(idx = 1:terra::nlyr(r), </span></span>
-<span><span class="co">#&gt;     time = terra::time(r)), time), !duplicated(time)), idx)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::subset(r, idx)</span></span>
-<span><span class="co">#&gt; debug: stopifnot(terra::crs(r, proj = T) == wgs84)</span></span>
-<span><span class="co">#&gt; debug: if (mask_tif) r &lt;- terra::mask(r, sf_zones)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::mask(r, sf_zones)</span></span>
-<span><span class="co">#&gt; debug: lyrs &lt;- glue("{var}|{terra::time(r)}")</span></span>
-<span><span class="co">#&gt; debug: if (length(dims_other) &gt; 0 &amp;&amp; !all(length(dims[dims_other]) == </span></span>
-<span><span class="co">#&gt;     1)) stop(glue("Other dimensions not yet supported: {paste(dims_other, collapse = ',')}"))</span></span>
-<span><span class="co">#&gt; debug: names(r) &lt;- lyrs</span></span>
-<span><span class="co">#&gt; debug: if (!is.null(rast_tif)) {</span></span>
-<span><span class="co">#&gt;     if (fs::file_exists(rast_tif)) {</span></span>
-<span><span class="co">#&gt;         r_tmp_tif &lt;- tempfile(fileext = ".tif")</span></span>
-<span><span class="co">#&gt;         r_tmp &lt;- c(rast(rast_tif), r)</span></span>
-<span><span class="co">#&gt;         r_tmp &lt;- terra::subset(r_tmp, which(!duplicated(names(r_tmp))))</span></span>
-<span><span class="co">#&gt;         terra::writeRaster(r_tmp, r_tmp_tif)</span></span>
-<span><span class="co">#&gt;         fs::file_delete(rast_tif)</span></span>
-<span><span class="co">#&gt;         fs::file_move(r_tmp_tif, rast_tif)</span></span>
-<span><span class="co">#&gt;         rm(r)</span></span>
-<span><span class="co">#&gt;         rm(r_tmp)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     r &lt;- terra::rast(rast_tif)</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: if (fs::file_exists(rast_tif)) {</span></span>
-<span><span class="co">#&gt;     r_tmp_tif &lt;- tempfile(fileext = ".tif")</span></span>
-<span><span class="co">#&gt;     r_tmp &lt;- c(rast(rast_tif), r)</span></span>
-<span><span class="co">#&gt;     r_tmp &lt;- terra::subset(r_tmp, which(!duplicated(names(r_tmp))))</span></span>
-<span><span class="co">#&gt;     terra::writeRaster(r_tmp, r_tmp_tif)</span></span>
-<span><span class="co">#&gt;     fs::file_delete(rast_tif)</span></span>
-<span><span class="co">#&gt;     fs::file_move(r_tmp_tif, rast_tif)</span></span>
-<span><span class="co">#&gt;     rm(r)</span></span>
-<span><span class="co">#&gt;     rm(r_tmp)</span></span>
-<span><span class="co">#&gt; } else {</span></span>
-<span><span class="co">#&gt;     terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::rast(rast_tif)</span></span>
-<span><span class="co">#&gt; debug: d_r &lt;- mutate(tidyr::pivot_longer(sf::st_drop_geometry(sf::st_as_sf(terra::zonal(x = r, </span></span>
-<span><span class="co">#&gt;     z = terra::vect(dplyr::select(sf_zones, dplyr::all_of(fld_zones))), </span></span>
-<span><span class="co">#&gt;     fun = zonal_fun, exact = T, na.rm = T, as.polygons = T))), </span></span>
-<span><span class="co">#&gt;     cols = -dplyr::any_of(fld_zones), names_to = "lyr", values_to = zonal_fun), </span></span>
-<span><span class="co">#&gt;     time = readr::parse_datetime(str_replace(lyr, glue("{var}\\|(.*)"), </span></span>
-<span><span class="co">#&gt;         "\\1")))</span></span>
-<span><span class="co">#&gt; debug: if (!is.null(zonal_csv)) write_csv(d_r, zonal_csv)</span></span>
-<span><span class="co">#&gt; debug: write_csv(d_r, zonal_csv)</span></span>
-<span><span class="co">#&gt; debug: if (!keep_nc) unlink(dir_nc, recursive = T)</span></span>
-<span><span class="co">#&gt; debug: unlink(dir_nc, recursive = T)</span></span>
-<span><span class="co">#&gt; debug: return(d_r)</span></span>
+<span><span class="co">#&gt; Fetching request 1 of 1 (2026-02-19 to 2026-02-28) ~ 17:13:25 UTC</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
 <span><span class="co">#&gt;    nms   lyr                               mean time               </span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS analysed_sst|2025-12-29 12:00:00  24.2 2025-12-29 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS analysed_sst|2025-12-30 12:00:00  24.2 2025-12-30 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS analysed_sst|2025-12-31 12:00:00  23.6 2025-12-31 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS analysed_sst|2026-01-01 12:00:00  22.9 2026-01-01 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS analysed_sst|2026-01-02 12:00:00  22.4 2026-01-02 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS analysed_sst|2026-01-03 12:00:00  22.4 2026-01-03 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS analysed_sst|2026-01-04 12:00:00  22.6 2026-01-04 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS analysed_sst|2026-01-05 12:00:00  22.9 2026-01-05 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS analysed_sst|2026-01-06 12:00:00  23.1 2026-01-06 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS analysed_sst|2026-01-07 12:00:00  23.3 2026-01-07 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS analysed_sst|2026-02-19 12:00:00  22.5 2026-02-19 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS analysed_sst|2026-02-20 12:00:00  23.1 2026-02-20 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS analysed_sst|2026-02-21 12:00:00  23.4 2026-02-21 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS analysed_sst|2026-02-22 12:00:00  23.5 2026-02-22 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS analysed_sst|2026-02-23 12:00:00  22.9 2026-02-23 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS analysed_sst|2026-02-24 12:00:00  21.6 2026-02-24 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS analysed_sst|2026-02-25 12:00:00  21.0 2026-02-25 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS analysed_sst|2026-02-26 12:00:00  20.9 2026-02-26 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS analysed_sst|2026-02-27 12:00:00  21.9 2026-02-27 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS analysed_sst|2026-02-28 12:00:00  22.9 2026-02-28 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plot-time-series">Plot time series<a class="anchor" aria-label="anchor" href="#plot-time-series"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="va">d_csv</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt;   nms   lyr                               mean time               </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS analysed_sst|2025-12-29 12:00:00  24.2 2025-12-29 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS analysed_sst|2025-12-30 12:00:00  24.2 2025-12-30 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS analysed_sst|2025-12-31 12:00:00  23.6 2025-12-31 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS analysed_sst|2026-01-01 12:00:00  22.9 2026-01-01 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS analysed_sst|2026-01-02 12:00:00  22.4 2026-01-02 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS analysed_sst|2026-01-03 12:00:00  22.4 2026-01-03 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS analysed_sst|2026-02-19 12:00:00  22.5 2026-02-19 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS analysed_sst|2026-02-20 12:00:00  23.1 2026-02-20 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS analysed_sst|2026-02-21 12:00:00  23.4 2026-02-21 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS analysed_sst|2026-02-22 12:00:00  23.5 2026-02-22 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS analysed_sst|2026-02-23 12:00:00  22.9 2026-02-23 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS analysed_sst|2026-02-24 12:00:00  21.6 2026-02-24 <span style="color: #949494;">12:00:00</span></span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_ts.html">plot_ts</a></span><span class="op">(</span><span class="va">d</span>, label <span class="op">=</span> <span class="st">"Surface Temperature (ºC)"</span><span class="op">)</span></span></code></pre></div>
 <div class="dygraphs html-widget html-fill-item" id="htmlwidget-e5c8c404fe174e4c81bd" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Temperature (ºC)","labels":["day","Surface Temperature (ºC)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Temperature (ºC)":{"axis":"y"}}},"scale":"daily","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-12-29T12:00:00.000Z","2025-12-30T12:00:00.000Z","2025-12-31T12:00:00.000Z","2026-01-01T12:00:00.000Z","2026-01-02T12:00:00.000Z","2026-01-03T12:00:00.000Z","2026-01-04T12:00:00.000Z","2026-01-05T12:00:00.000Z","2026-01-06T12:00:00.000Z","2026-01-07T12:00:00.000Z"],[24.20424364503,24.16138146934548,23.6416933280497,22.9223150203447,22.36689418868958,22.37416828053925,22.57832328555519,22.87336866447741,23.1221873973777,23.26926157278762]]},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Temperature (ºC)","labels":["day","Surface Temperature (ºC)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Temperature (ºC)":{"axis":"y"}}},"scale":"daily","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2026-02-19T12:00:00.000Z","2026-02-20T12:00:00.000Z","2026-02-21T12:00:00.000Z","2026-02-22T12:00:00.000Z","2026-02-23T12:00:00.000Z","2026-02-24T12:00:00.000Z","2026-02-25T12:00:00.000Z","2026-02-26T12:00:00.000Z","2026-02-27T12:00:00.000Z","2026-02-28T12:00:00.000Z"],[22.52926821702148,23.09344806083505,23.42239045196723,23.54480371051031,22.85386967363431,21.61043439922254,20.97505753959639,20.88890944725644,21.93226068828261,22.91453637774262]]},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3 id="map-raster">Map raster<a class="anchor" aria-label="anchor" href="#map-raster"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="va">r_tif</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "analysed_sst|2025-12-29 12:00:00" "analysed_sst|2025-12-30 12:00:00"</span></span>
-<span><span class="co">#&gt;  [3] "analysed_sst|2025-12-31 12:00:00" "analysed_sst|2026-01-01 12:00:00"</span></span>
-<span><span class="co">#&gt;  [5] "analysed_sst|2026-01-02 12:00:00" "analysed_sst|2026-01-03 12:00:00"</span></span>
-<span><span class="co">#&gt;  [7] "analysed_sst|2026-01-04 12:00:00" "analysed_sst|2026-01-05 12:00:00"</span></span>
-<span><span class="co">#&gt;  [9] "analysed_sst|2026-01-06 12:00:00" "analysed_sst|2026-01-07 12:00:00"</span></span>
+<span><span class="co">#&gt;  [1] "analysed_sst|2026-02-19 12:00:00" "analysed_sst|2026-02-20 12:00:00"</span></span>
+<span><span class="co">#&gt;  [3] "analysed_sst|2026-02-21 12:00:00" "analysed_sst|2026-02-22 12:00:00"</span></span>
+<span><span class="co">#&gt;  [5] "analysed_sst|2026-02-23 12:00:00" "analysed_sst|2026-02-24 12:00:00"</span></span>
+<span><span class="co">#&gt;  [7] "analysed_sst|2026-02-25 12:00:00" "analysed_sst|2026-02-26 12:00:00"</span></span>
+<span><span class="co">#&gt;  [9] "analysed_sst|2026-02-27 12:00:00" "analysed_sst|2026-02-28 12:00:00"</span></span>
 <span></span>
 <span><span class="va">lyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plet.html" class="external-link">plet</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">lyr</span><span class="op">]</span>, tiles <span class="op">=</span> <span class="st">"Esri.OceanBasemap"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in colors(.): Some values were outside the color scale and will be</span></span>
-<span><span class="co">#&gt; treated as NA</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plet.html" class="external-link">plet</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">lyr</span><span class="op">]</span>, tiles <span class="op">=</span> <span class="st">"Esri.OceanBasemap"</span><span class="op">)</span></span></code></pre></div>
 <div class="leaflet html-widget html-fill-item" id="htmlwidget-36aa3d2a04d42bbc2145" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAAeCAYAAACfWhZxAAAFjUlEQVRYheWYXYhkRxXHf6eq7r3dt3u6eyY9X9mPmZ0EFzcSWbMsRsGw6G52Cb5JnlTwJSRP0X1IkEUQ4scquGZBBEVEBVGffBBh1ZcouE+CoIgkkJCEeQkxyezM7HTfe6vq+FA9k40xuIkxs84cKG5R3O57fudf/9N1W1SV/RTff/pjanY7ifc6enaLfQfdN6P9Bf2pq4/o0G7uL+iOq5h39f6CXijWuc3k+wt6Lr9GW4q9DX1u6fN66hMXd36TF9w1zMIz4nYzqf95dEuqmYw7vnVJj518jvOH1gD2rtJnb3tIfb9ka2jw056D5RozZgTsUej7y8+ozAwYzxWM5qGc3mKYbyKknb4noc3MNM18n81FRzXvOTC4RsdW3H14VWAPQp9bPq/+0CzrK202lqFcuM6h7mv07Wjnnj3VyM4d+6LWy0PWj7S4dqdg7tjg2NxLLLVf5ZGjT8n2fbJX3rLOnPiyVrMl68sZG8sgK5scP7jKB3urXLjr13Ljvf/30Gc/cEH9oGQ8m7N+2LG5orSW1jm+uMo9vRc4//7fyb9+5paHPjv7sEqRQ6tAi4wrf/vaDsTpjzyhsXBszedsHDRsLkd6S2ucXHyBk1PP89DRP7wJGG4h6NP2QRVjEecgz5DMpbm1kDkocjR3qLPEwhHKDN9xjIaWzQPC6LBn5uAaJ+Ze5N7es3zufVf/LTDsEvT9nc8qUSFGAFQVEYFtUOeQPANnwWWQOzTPiIUjFg7fcdQ9x9acYWsB6kM1i7e/yj3DVb7zoZ++Jex27E73NgaIIBYERAzikqKSZUlZl6A1s2grI7QyfNdRdx3VQBjPCON5JS6MObL4CvPtDZbbL9/U40VVWXnykkoDthYkAJqGAOLBVmlkW4obgR1H3DgiXnnqN4//x8oCnDv8qNJ4tPEQQlJZZKcI4tIWJs+hlaGZI+aO2LL40lFPOaq+UPWFehrqoaeYHbEy/AcHOmv84MRPbioP2FZa0tDJVSZrUSZ5bRchChIU4wW1gnjl46e+rqYJEBQJEYkKMc0JMV19ADt5lAgEg0adqCzJt9ZAp03sFIQyx3ccvm1oupa6IzRTUPehHkRkumJm+jrD8jpHey/z5PGf3TTwDrQaRYwQnWJVePrCFwTgzm98WyWAGtLZbQccxAvSCGpAEUQVttuDkIqCSYU0krZvcEnhEFNhjQFn0Nxx5a9flVNnLmpoWaqepZ4Smg40XfBdJXQDptfQ743otUfcXm7wi3u/97Zg3wjtlCDJYs8+dl4AVi5fUm0pooL4BKF2AoQABhVBM8GagKkE44GQyBVIL643FGO7aYqgzhAzS2hbQplOw6/cVaAG6inwUwlUug2tsqbTqhm0RgxbW/z8HcJuhyz96KJqkJRYBNH0fWompo4g3iBeMJVgR4IbgdsCOwY31uT1ccRUEeMnHdkIapJX1Ajq0q6IVohOiLngC5KiPWi6SuhEtIiYtqfsVAzKEcP2dQb5iB+f/OF/BXpjOFc2xGBeVwMQUcRMFItCDIIGg28MoW3wtUnK1qn52ZHgxgZbKWbSCNVAdII6iA6i5fV5BjGH0FZC10/UbOiXI9pZzaAY88uPfvddg3wT9Gxvk7F3/PmBr8jdv/qSAlgTcTb5Lqrgg6EJlhAMIRpCYwkhrWstSGWxY8FWAoGdxhizZJ3oNFnDKppFJFNMHmi1K3rtil4xZroYvWOPvm3oo9MvseFbAPzlk08IwNnfP6qCIkI6Q6jBR0NQIaohqhBjWht7S9M4vLc0jUGjpI5vFGMV6wKFjeTOk7tAZgN/PP3N9wTuLaE/3H+O13z5hsUr912Wh//0aQ0YGrWEaPBq0YnfEQVN/0METcUI0TCOlt/ed3lXgW4m5Orzy7oRW5w58vdbPtl3K/4JeAxQaWX2sw0AAAAASUVORK5CYII=",[[25.69999920880353,-83.15000002501441],[24.30000079119646,-80.04999692322777]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #9FD939 14.134262519915%, #3BBB74 31.8021075191908%, #20918C 49.4699525184666%, #30678E 67.1377975177424%, #453480 84.8056425170182%, #440154 "],"labels":["25.5","25.0","24.5","24.0","23.5"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"analysed_sst|2025-12-29 12:00:00","extra":{"p_1":0.1413426251991498,"p_n":0.8480564251701822},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.30000079119646,25.69999920880353],"lng":[-83.15000002501441,-80.04999692322777]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAAeCAYAAACfWhZxAAAFt0lEQVRYheXYS4hkVx3H8e//nHPPfdTt6uqqfs2jnXE0D0GIC3WiI4oIxkVWklVgJCERAkLAnQOKz3VCgqAouhDRhaCgBCP42KhEHAUXamIiRiNq7Jme6u7qetx7z/m7uN3tDKM4ZoyddP/hUpvDrfM5v3POvyhRVY5Sfev3d6g56En8vyuTmiOHzs0RQ3/26XdrftSS9hIopDla6NxUdEw4emgvHG70m574qL7lyQv7PXnejDl54q/iDnJSL3speBs4/7MH9FzvOc7lI+AQJ33Hdz6mzkZKP2M122Ytucyqa0M/lEm/7Xsf0cJDllQcK7Z4XfYia27IwHSAQ4ou0ylWIr10yuuLdc74v7PqFLP6O4FDiL7npw9pz0Puao6lW5z265x0myyYYn/MoULf//P7dC6BVBr6fszp9BKnkkssWyFZfU72xh0a9IMXP6CpKKlt6LoJK8kWJ5INlu2ExeN/kavHvurRD108rxHBSySzDV03pu92WEk2WbQjblu7FgyvAvSZxx7R0G3oDka8pjfkiXc+vo94+Jf3qhXBwn7CPTdm4LbpmxFnTz1/HRhAXgl/Itz15k9oU6ZMBwnVvKEqhboDTQl1N6LdhrmFHY7Pb7KYjenaCdZEBBAgMYHSTenZHRbdiBW3yXtf+9t/CYYDSvquuftU8gzp92gGJfUgpy4ts14LDjmEDEKmqI+YJGBMJERDVKHBYFQRUaxEvGnomCk9O+H8LU/9W+xeHQjaLA7QIqXud5gNPNMFy6zXphsyCF7RFGIWoGhIsprUBYwoUYWghigRQwv3piGRQGaqG/p+B3DvUx/UWXRcmnRY3y4Zb+bIpsNfMaRDSIdKthHwmzVuVGHGFUwrqGu++8Jj/3FloU3XlB20P099asB00TPpW6o5qOeg6SghU0gi6hRxiiQBn9d0soo8qfGmhQMEFcAgEUD58Bu+f0Pz2EcP/A7DusBIRETBRNTQPruvEgWJijQR6gaaGqqK9y08qNo0ECKgIHsnrf0QZ5E0xawu0yx1GR/LGK9Ypn2oekrIFU0DWDBpg0sCYhQjirWR3NcUvqJwFZlrsBJRoFKH1UgU4ZNv/PYNg69CjxgFT1BDEwzPn78gALd+6lFFdy1RkaAQI0SFqGhsV12ca98ksv+IMZA4yDJir2C2VLBzPGFnRZguK7Ff48sZuQtYG/jV3Z+Rs09eUJF2ywpgTCQ1gdQ1ZLYhMWE3ZUsTDV+784v/FfYa9JLb5rItSUzgmfd/XADOPPqI+ihIpN1CAVCFvcveCOITyDy4BLxDnQVrwAjBWTRz1GXCbMExXjRMlqFaarALFQvlhDKd4U2LBlgqRkT+6TAoiQ3tGIkYUYIavnr2Cy8Ju1dy8Y9r+qe6z2+mJ/jF8BTPbgzYvtKBzWT/TGcbSrHe4IcVdlwh0xpCRBOLZglNJyUUlpgYooNoDSEVQgZ1R6i6UC0oYVCTdaf0OhNKPyOzDZlrcCZg2Dur7Q3drqviJGJN4Ctv/fJNQa8u1zU1AzvieDLkSqfDLFheALZNQa0eUYMJgmnai945g0kdiBCKhKprmfVs22pSiB7U0eKTtu3ELEKnIStnzBVT8qTaBdekJmAkEhHiLjio8M1zn/ufIa9Dqwqlqbj/1p/Il555h3rT0PUz/pzP82I+xzTPCGlCkwp1kZBuW0ztiU6Y9QzTBZgtKGEuoFnbU8Uq1gWMjSRGMSbiTMS79nw6E4E21SqCiEUVvvH2z79s0GvQY7X72+mB234sAJ/+9d3adRO6fsrf8i7DuQ6jgWO65bDjtk2og2o+Ir2Kbm9Mvxgzl8zIXY3d7QK621Ob3QSNKN4Evn7nzZ3Jmy354R9uUYPyrtPPXjORx59+j15uStZnJZeqko1pwZVpzmTmURV80rDYGbFWDjmZDVlKtnBEPnT7jw4UdCPlRjHFcv3v74dv/8ErfvIvtf4B0rFj/dB7uzsAAAAASUVORK5CYII=",[[25.69999920880353,-83.15000002501441],[24.30000079119646,-80.04999692322777]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #F2E51E 1.61943147889267%, #6ECE58 21.8623442702106%, #1FA286 42.1052570615285%, #2C728E 62.3481698528464%, #443B83 82.5910826441643%, #440154 "],"labels":["24","23","22","21","20"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"analysed_sst|2026-02-19 12:00:00","extra":{"p_1":0.01619431478892672,"p_n":0.825910826441643},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.30000079119646,25.69999920880353],"lng":[-83.15000002501441,-80.04999692322777]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <div class="section level2">
@@ -383,15 +239,16 @@ Form</a></li>
 - Sea Surface Salinity, Miras SMOS, Near Real-Time, Global 0.25°,
 2010-present, 3 Day Composite - Data Access Form</a></li>
 </ul>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ed_url</span>  <span class="op">&lt;-</span> <span class="st">"https://coastwatch.noaa.gov/erddap/griddap/noaacwSMOSsss3day.html"</span></span>
-<span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_info.html">ed_info</a></span><span class="op">(</span><span class="va">ed_url</span><span class="op">)</span></span>
-<span><span class="va">ed</span></span>
-<span><span class="co">#&gt; &lt;ERDDAP info&gt; noaacwSMOSsss3day </span></span>
+<span><span class="va">var</span> <span class="op">&lt;-</span> <span class="st">"sss"</span></span>
+<span></span>
+<span><span class="op">(</span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_info.html">ed_info</a></span><span class="op">(</span><span class="va">ed_url</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;ERDDAP(TM) info&gt; noaacwSMOSsss3day </span></span>
 <span><span class="co">#&gt;  Base URL: https://coastwatch.noaa.gov/erddap </span></span>
 <span><span class="co">#&gt;  Dataset Type: griddap </span></span>
 <span><span class="co">#&gt;  Dimensions (range):  </span></span>
-<span><span class="co">#&gt;      time: (2010-06-03T12:00:00Z, 2026-01-01T12:00:00Z) </span></span>
+<span><span class="co">#&gt;      time: (2010-06-03T12:00:00Z, 2026-02-24T12:00:00Z) </span></span>
 <span><span class="co">#&gt;      altitude: (0.0, 0.0) </span></span>
 <span><span class="co">#&gt;      latitude: (-89.875, 89.875) </span></span>
 <span><span class="co">#&gt;      longitude: (-179.875, 179.875) </span></span>
@@ -404,25 +261,34 @@ Form</a></li>
 <div class="section level3">
 <h3 id="get-dimensions-1">Get dimensions<a class="anchor" aria-label="anchor" href="#get-dimensions-1"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">var</span> <span class="op">&lt;-</span> <span class="st">"sss"</span></span>
-<span></span>
-<span><span class="va">dims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_dims.html">ed_dims</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dims</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "time"      "altitude"  "latitude"  "longitude"</span></span>
-<span></span>
-<span><span class="co"># let's limit to the most recent 10 times</span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">dims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ed_dims.html">ed_dims</a></span><span class="op">(</span><span class="va">ed</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dims</span><span class="op">)</span></span>
+<span>  <span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span></span>
+<span><span class="op">}</span>, error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Could not fetch ERDDAP time dimension: "</span>, <span class="va">e</span><span class="op">$</span><span class="va">message</span><span class="op">)</span></span>
+<span>  <span class="va">times</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "2026-01-28 12:00:00 UTC" "2026-01-31 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2026-02-03 12:00:00 UTC" "2026-02-06 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2026-02-09 12:00:00 UTC" "2026-02-12 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2026-02-15 12:00:00 UTC" "2026-02-18 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2026-02-21 12:00:00 UTC" "2026-02-24 12:00:00 UTC"</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># let's limit to the most recent 10 times</span></span>
 <span><span class="op">(</span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">dims</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "2025-12-06 12:00:00 UTC" "2025-12-09 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [3] "2025-12-12 12:00:00 UTC" "2025-12-15 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [5] "2025-12-18 12:00:00 UTC" "2025-12-21 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [7] "2025-12-24 12:00:00 UTC" "2025-12-27 12:00:00 UTC"</span></span>
-<span><span class="co">#&gt;  [9] "2025-12-30 12:00:00 UTC" "2026-01-01 12:00:00 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "2026-01-28 12:00:00 UTC" "2026-01-31 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [3] "2026-02-03 12:00:00 UTC" "2026-02-06 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [5] "2026-02-09 12:00:00 UTC" "2026-02-12 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [7] "2026-02-15 12:00:00 UTC" "2026-02-18 12:00:00 UTC"</span></span>
+<span><span class="co">#&gt;  [9] "2026-02-21 12:00:00 UTC" "2026-02-24 12:00:00 UTC"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="extract-dataset-from-aoi-1">Extract dataset from AoI<a class="anchor" aria-label="anchor" href="#extract-dataset-from-aoi-1"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_timeseries.csv"</span><span class="op">)</span></span>
 <span><span class="va">r_tif</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org/reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"data_tmp/sss_raster.tif"</span><span class="op">)</span></span>
 <span></span>
@@ -437,212 +303,59 @@ Form</a></li>
 <span>  time_min  <span class="op">=</span> <span class="va">times</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>  verbose   <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Downloading 1 requests, up to 1282 time slices each</span></span>
-<span><span class="co">#&gt; Called from: ed_extract(ed = ed, var = var, sf_zones = aoi, fld_zones = "nms", </span></span>
-<span><span class="co">#&gt;     zonal_fun = "mean", zonal_csv = d_csv, rast_tif = r_tif, </span></span>
-<span><span class="co">#&gt;     time_min = times[1], verbose = TRUE)</span></span>
-<span><span class="co">#&gt; debug: while (i_req &lt;= n_reqs) {</span></span>
-<span><span class="co">#&gt;     i_t_beg &lt;- (i_req - 1) * n_t_per_req + 1</span></span>
-<span><span class="co">#&gt;     i_t_end &lt;- min(c(i_t_beg + n_t_per_req - 1, n_t))</span></span>
-<span><span class="co">#&gt;     t_req &lt;- times_todo[c(i_t_beg, i_t_end)]</span></span>
-<span><span class="co">#&gt;     t_req_str &lt;- format_ISO8601(t_req, usetz = "Z")</span></span>
-<span><span class="co">#&gt;     if (verbose) </span></span>
-<span><span class="co">#&gt;         message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt;     ncs0 &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;         ".*\\.nc$", full.names = T), size = file.size(nc)), size == </span></span>
-<span><span class="co">#&gt;         0), nc)</span></span>
-<span><span class="co">#&gt;     unlink(ncs0)</span></span>
-<span><span class="co">#&gt;     nc_retry &lt;- T</span></span>
-<span><span class="co">#&gt;     nc_n_try &lt;- 1</span></span>
-<span><span class="co">#&gt;     n_max_retries</span></span>
-<span><span class="co">#&gt;     while (nc_retry) {</span></span>
-<span><span class="co">#&gt;         res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;             url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;                 bbox[["xmax"]]), latitude = c(bbox[["ymin"]], </span></span>
-<span><span class="co">#&gt;                 bbox[["ymax"]]), time = t_req_str, fmt = "nc", </span></span>
-<span><span class="co">#&gt;             store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt;         if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;             err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;             msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;             nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;             if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;                 stop(msg)</span></span>
-<span><span class="co">#&gt;             }</span></span>
-<span><span class="co">#&gt;             else {</span></span>
-<span><span class="co">#&gt;                 message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;                 Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;             }</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;         else {</span></span>
-<span><span class="co">#&gt;             nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     i_req &lt;- i_req + 1</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: i_t_beg &lt;- (i_req - 1) * n_t_per_req + 1</span></span>
-<span><span class="co">#&gt; debug: i_t_end &lt;- min(c(i_t_beg + n_t_per_req - 1, n_t))</span></span>
-<span><span class="co">#&gt; debug: t_req &lt;- times_todo[c(i_t_beg, i_t_end)]</span></span>
-<span><span class="co">#&gt; debug: t_req_str &lt;- format_ISO8601(t_req, usetz = "Z")</span></span>
-<span><span class="co">#&gt; debug: if (verbose) message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt; debug: message(glue("Fetching request {i_req} of {n_reqs} ({paste(as.Date(t_req), collapse = ' to ')}) ~ {format(Sys.time(), '%H:%M:%S %Z')}"))</span></span>
-<span><span class="co">#&gt; Fetching request 1 of 1 (2025-12-06 to 2026-01-01) ~ 19:29:40 UTC</span></span>
-<span><span class="co">#&gt; debug: ncs0 &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;     ".*\\.nc$", full.names = T), size = file.size(nc)), size == </span></span>
-<span><span class="co">#&gt;     0), nc)</span></span>
-<span><span class="co">#&gt; debug: unlink(ncs0)</span></span>
-<span><span class="co">#&gt; debug: nc_retry &lt;- T</span></span>
-<span><span class="co">#&gt; debug: nc_n_try &lt;- 1</span></span>
-<span><span class="co">#&gt; debug: n_max_retries</span></span>
-<span><span class="co">#&gt; debug: while (nc_retry) {</span></span>
-<span><span class="co">#&gt;     res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;         url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;             bbox[["xmax"]]), latitude = c(bbox[["ymin"]], bbox[["ymax"]]), </span></span>
-<span><span class="co">#&gt;         time = t_req_str, fmt = "nc", store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt;     if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;         err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;         msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;         nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;         if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;             stop(msg)</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;         else {</span></span>
-<span><span class="co">#&gt;             message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;             Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;         }</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: res &lt;- try(rerddap::griddap(datasetx = attr(ed, "datasetid"), </span></span>
-<span><span class="co">#&gt;     url = ed$base_url, fields = var, longitude = c(bbox[["xmin"]], </span></span>
-<span><span class="co">#&gt;         bbox[["xmax"]]), latitude = c(bbox[["ymin"]], bbox[["ymax"]]), </span></span>
-<span><span class="co">#&gt;     time = t_req_str, fmt = "nc", store = rerddap::disk(path = dir_nc)))</span></span>
-<span><span class="co">#&gt; debug: if (inherits(res, "try-error")) {</span></span>
-<span><span class="co">#&gt;     err &lt;- attr(res, "condition")</span></span>
-<span><span class="co">#&gt;     msg &lt;- glue::glue("  ERROR in calling {err$call}:\n {err$message}")</span></span>
-<span><span class="co">#&gt;     nc_n_try &lt;- nc_n_try + 1</span></span>
-<span><span class="co">#&gt;     if (nc_n_try &gt; n_max_retries) {</span></span>
-<span><span class="co">#&gt;         stop(msg)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         message(msg, "\nRETRYing...")</span></span>
-<span><span class="co">#&gt;         Sys.sleep(1)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt; } else {</span></span>
-<span><span class="co">#&gt;     nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: nc_retry &lt;- F</span></span>
-<span><span class="co">#&gt; debug: (while) nc_retry</span></span>
-<span><span class="co">#&gt; debug: i_req &lt;- i_req + 1</span></span>
-<span><span class="co">#&gt; debug: (while) i_req &lt;= n_reqs</span></span>
-<span><span class="co">#&gt; debug: ncs &lt;- dplyr::pull(dplyr::filter(dplyr::tibble(nc = list.files(dir_nc, </span></span>
-<span><span class="co">#&gt;     ".*\\.nc$", full.names = T), size = file.size(nc)), size &gt; </span></span>
-<span><span class="co">#&gt;     0), nc)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::rast(ncs)</span></span>
-<span><span class="co">#&gt; debug: stopifnot(all(class(terra::time(r)) %in% c("POSIXct", "POSIXt")))</span></span>
-<span><span class="co">#&gt; debug: idx &lt;- dplyr::pull(dplyr::filter(dplyr::arrange(dplyr::tibble(idx = 1:terra::nlyr(r), </span></span>
-<span><span class="co">#&gt;     time = terra::time(r)), time), !duplicated(time)), idx)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::subset(r, idx)</span></span>
-<span><span class="co">#&gt; debug: stopifnot(terra::crs(r, proj = T) == wgs84)</span></span>
-<span><span class="co">#&gt; debug: if (mask_tif) r &lt;- terra::mask(r, sf_zones)</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::mask(r, sf_zones)</span></span>
-<span><span class="co">#&gt; debug: lyrs &lt;- glue("{var}|{terra::time(r)}")</span></span>
-<span><span class="co">#&gt; debug: if (length(dims_other) &gt; 0 &amp;&amp; !all(length(dims[dims_other]) == </span></span>
-<span><span class="co">#&gt;     1)) stop(glue("Other dimensions not yet supported: {paste(dims_other, collapse = ',')}"))</span></span>
-<span><span class="co">#&gt; debug: names(r) &lt;- lyrs</span></span>
-<span><span class="co">#&gt; debug: if (!is.null(rast_tif)) {</span></span>
-<span><span class="co">#&gt;     if (fs::file_exists(rast_tif)) {</span></span>
-<span><span class="co">#&gt;         r_tmp_tif &lt;- tempfile(fileext = ".tif")</span></span>
-<span><span class="co">#&gt;         r_tmp &lt;- c(rast(rast_tif), r)</span></span>
-<span><span class="co">#&gt;         r_tmp &lt;- terra::subset(r_tmp, which(!duplicated(names(r_tmp))))</span></span>
-<span><span class="co">#&gt;         terra::writeRaster(r_tmp, r_tmp_tif)</span></span>
-<span><span class="co">#&gt;         fs::file_delete(rast_tif)</span></span>
-<span><span class="co">#&gt;         fs::file_move(r_tmp_tif, rast_tif)</span></span>
-<span><span class="co">#&gt;         rm(r)</span></span>
-<span><span class="co">#&gt;         rm(r_tmp)</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     else {</span></span>
-<span><span class="co">#&gt;         terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt;     }</span></span>
-<span><span class="co">#&gt;     r &lt;- terra::rast(rast_tif)</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: if (fs::file_exists(rast_tif)) {</span></span>
-<span><span class="co">#&gt;     r_tmp_tif &lt;- tempfile(fileext = ".tif")</span></span>
-<span><span class="co">#&gt;     r_tmp &lt;- c(rast(rast_tif), r)</span></span>
-<span><span class="co">#&gt;     r_tmp &lt;- terra::subset(r_tmp, which(!duplicated(names(r_tmp))))</span></span>
-<span><span class="co">#&gt;     terra::writeRaster(r_tmp, r_tmp_tif)</span></span>
-<span><span class="co">#&gt;     fs::file_delete(rast_tif)</span></span>
-<span><span class="co">#&gt;     fs::file_move(r_tmp_tif, rast_tif)</span></span>
-<span><span class="co">#&gt;     rm(r)</span></span>
-<span><span class="co">#&gt;     rm(r_tmp)</span></span>
-<span><span class="co">#&gt; } else {</span></span>
-<span><span class="co">#&gt;     terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; debug: terra::writeRaster(r, rast_tif, overwrite = T, gdal = c("COMPRESS=DEFLATE"))</span></span>
-<span><span class="co">#&gt; debug: r &lt;- terra::rast(rast_tif)</span></span>
-<span><span class="co">#&gt; debug: d_r &lt;- mutate(tidyr::pivot_longer(sf::st_drop_geometry(sf::st_as_sf(terra::zonal(x = r, </span></span>
-<span><span class="co">#&gt;     z = terra::vect(dplyr::select(sf_zones, dplyr::all_of(fld_zones))), </span></span>
-<span><span class="co">#&gt;     fun = zonal_fun, exact = T, na.rm = T, as.polygons = T))), </span></span>
-<span><span class="co">#&gt;     cols = -dplyr::any_of(fld_zones), names_to = "lyr", values_to = zonal_fun), </span></span>
-<span><span class="co">#&gt;     time = readr::parse_datetime(str_replace(lyr, glue("{var}\\|(.*)"), </span></span>
-<span><span class="co">#&gt;         "\\1")))</span></span>
-<span><span class="co">#&gt; debug: if (!is.null(zonal_csv)) write_csv(d_r, zonal_csv)</span></span>
-<span><span class="co">#&gt; debug: write_csv(d_r, zonal_csv)</span></span>
-<span><span class="co">#&gt; debug: if (!keep_nc) unlink(dir_nc, recursive = T)</span></span>
-<span><span class="co">#&gt; debug: unlink(dir_nc, recursive = T)</span></span>
-<span><span class="co">#&gt; debug: return(d_r)</span></span>
+<span><span class="co">#&gt; Fetching request 1 of 1 (2026-01-28 to 2026-02-24) ~ 17:13:35 UTC</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
 <span><span class="co">#&gt;    nms   lyr                      mean time               </span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS sss|2025-12-06 12:00:00  32.1 2025-12-06 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS sss|2025-12-09 12:00:00  36.7 2025-12-09 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS sss|2025-12-12 12:00:00  37.4 2025-12-12 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS sss|2025-12-15 12:00:00  36.2 2025-12-15 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS sss|2025-12-18 12:00:00  36.6 2025-12-18 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS sss|2025-12-21 12:00:00  36.1 2025-12-21 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS sss|2025-12-24 12:00:00  33.8 2025-12-24 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS sss|2025-12-27 12:00:00  36.8 2025-12-27 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS sss|2025-12-30 12:00:00  34.6 2025-12-30 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS sss|2026-01-01 12:00:00  37.6 2026-01-01 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> FKNMS sss|2026-01-28 12:00:00  36.9 2026-01-28 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> FKNMS sss|2026-01-31 12:00:00  34.5 2026-01-31 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> FKNMS sss|2026-02-03 12:00:00  35.1 2026-02-03 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> FKNMS sss|2026-02-06 12:00:00  38.8 2026-02-06 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> FKNMS sss|2026-02-09 12:00:00  36.0 2026-02-09 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> FKNMS sss|2026-02-12 12:00:00  35.1 2026-02-12 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> FKNMS sss|2026-02-15 12:00:00  37.1 2026-02-15 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> FKNMS sss|2026-02-18 12:00:00  35.3 2026-02-18 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> FKNMS sss|2026-02-21 12:00:00  35.8 2026-02-21 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> FKNMS sss|2026-02-24 12:00:00  37.0 2026-02-24 <span style="color: #949494;">12:00:00</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plot-time-series-1">Plot time series<a class="anchor" aria-label="anchor" href="#plot-time-series-1"></a>
 </h3>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="va">d_csv</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">#&gt;   nms   lyr                      mean time               </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS sss|2025-12-06 12:00:00  32.1 2025-12-06 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS sss|2025-12-09 12:00:00  36.7 2025-12-09 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS sss|2025-12-12 12:00:00  37.4 2025-12-12 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS sss|2025-12-15 12:00:00  36.2 2025-12-15 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS sss|2025-12-18 12:00:00  36.6 2025-12-18 <span style="color: #949494;">12:00:00</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS sss|2025-12-21 12:00:00  36.1 2025-12-21 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FKNMS sss|2026-01-28 12:00:00  36.9 2026-01-28 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> FKNMS sss|2026-01-31 12:00:00  34.5 2026-01-31 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> FKNMS sss|2026-02-03 12:00:00  35.1 2026-02-03 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> FKNMS sss|2026-02-06 12:00:00  38.8 2026-02-06 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> FKNMS sss|2026-02-09 12:00:00  36.0 2026-02-09 <span style="color: #949494;">12:00:00</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> FKNMS sss|2026-02-12 12:00:00  35.1 2026-02-12 <span style="color: #949494;">12:00:00</span></span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_ts.html">plot_ts</a></span><span class="op">(</span><span class="va">d</span>, label <span class="op">=</span> <span class="st">"Surface Salinity (PSU)"</span><span class="op">)</span></span></code></pre></div>
 <div class="dygraphs html-widget html-fill-item" id="htmlwidget-febe03efa1a2d8d52a86" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Salinity (PSU)","labels":["week","Surface Salinity (PSU)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Salinity (PSU)":{"axis":"y"}}},"scale":"weekly","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2025-12-06T12:00:00.000Z","2025-12-09T12:00:00.000Z","2025-12-12T12:00:00.000Z","2025-12-15T12:00:00.000Z","2025-12-18T12:00:00.000Z","2025-12-21T12:00:00.000Z","2025-12-24T12:00:00.000Z","2025-12-27T12:00:00.000Z","2025-12-30T12:00:00.000Z","2026-01-01T12:00:00.000Z"],[32.10989395614936,36.6974231120695,37.42440414428711,36.19845070702303,36.64647163560935,36.08102561124824,33.80305714278875,36.84844964386233,34.56314902526748,37.61098229583851]]},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"attrs":{"xlabel":"Date","ylabel":"Surface Salinity (PSU)","labels":["week","Surface Salinity (PSU)"],"legend":"auto","retainDateWindow":false,"axes":{"x":{"pixelsPerLabel":60}},"colors":["red","red"],"series":{"Surface Salinity (PSU)":{"axis":"y"}}},"scale":"weekly","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2026-01-28T12:00:00.000Z","2026-01-31T12:00:00.000Z","2026-02-03T12:00:00.000Z","2026-02-06T12:00:00.000Z","2026-02-09T12:00:00.000Z","2026-02-12T12:00:00.000Z","2026-02-15T12:00:00.000Z","2026-02-18T12:00:00.000Z","2026-02-21T12:00:00.000Z","2026-02-24T12:00:00.000Z"],[36.8520251426357,34.46826767823285,35.12144741794501,38.77519810331994,35.96616805177973,35.06585650193824,37.14480168676399,35.28968861226137,35.78328213714401,36.96250847243179]]},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level3">
 <h3 id="map-raster-1">Map raster<a class="anchor" aria-label="anchor" href="#map-raster-1"></a>
 </h3>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span><span class="va">r_tif</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "sss|2025-12-06 12:00:00" "sss|2025-12-09 12:00:00"</span></span>
-<span><span class="co">#&gt;  [3] "sss|2025-12-12 12:00:00" "sss|2025-12-15 12:00:00"</span></span>
-<span><span class="co">#&gt;  [5] "sss|2025-12-18 12:00:00" "sss|2025-12-21 12:00:00"</span></span>
-<span><span class="co">#&gt;  [7] "sss|2025-12-24 12:00:00" "sss|2025-12-27 12:00:00"</span></span>
-<span><span class="co">#&gt;  [9] "sss|2025-12-30 12:00:00" "sss|2026-01-01 12:00:00"</span></span>
+<span><span class="co">#&gt;  [1] "sss|2026-01-28 12:00:00" "sss|2026-01-31 12:00:00"</span></span>
+<span><span class="co">#&gt;  [3] "sss|2026-02-03 12:00:00" "sss|2026-02-06 12:00:00"</span></span>
+<span><span class="co">#&gt;  [5] "sss|2026-02-09 12:00:00" "sss|2026-02-12 12:00:00"</span></span>
+<span><span class="co">#&gt;  [7] "sss|2026-02-15 12:00:00" "sss|2026-02-18 12:00:00"</span></span>
+<span><span class="co">#&gt;  [9] "sss|2026-02-21 12:00:00" "sss|2026-02-24 12:00:00"</span></span>
 <span></span>
 <span><span class="va">lyr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plet.html" class="external-link">plet</a></span><span class="op">(</span><span class="va">r</span><span class="op">[</span><span class="va">lyr</span><span class="op">]</span>, tiles <span class="op">=</span> <span class="st">"Esri.OceanBasemap"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in colors(.): Some values were outside the color scale and will be</span></span>
 <span><span class="co">#&gt; treated as NA</span></span></code></pre></div>
 <div class="leaflet html-widget html-fill-item" id="htmlwidget-1fb4450895fe099f74a1" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-1fb4450895fe099f74a1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAGCAYAAAAYLBS/AAAAMElEQVQYlWP8//8/A6mAiWQdZGv690LtPwMDA4ObaeN/teZ+otzKSJGfPGXzidYNAHySDxYVyCBrAAAAAElFTkSuQmCC",[[25.75,-83.25],[24.24999999999999,-80]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #DAE318 5.4389489330192%, #72CF56 21.2203651451153%, #28AE7F 37.0017813572113%, #22898D 52.7831975693074%, #33628D 68.5646137814035%, #453681 84.3460299934995%, #440154 "],"labels":["37","36","35","34","33","32"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"sss|2025-12-06 12:00:00","extra":{"p_1":0.05438948933019198,"p_n":0.8434602999349954},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.24999999999999,25.75],"lng":[-83.25,-80]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1fb4450895fe099f74a1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,"Esri.OceanBasemap",{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false}]},{"method":"addRasterImage","args":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAGCAYAAAAYLBS/AAAANUlEQVQYlWP8//8/A6mAiWQdZGtSa+7/z8DAwPD9ueL/souhRLmVkSI/KU7q/T/phjNRJgAAQpISwFfXIJsAAAAASUVORK5CYII=",[[25.75,-83.25],[24.24999999999999,-80]],null,null,{"tileSize":256,"zIndex":1,"minZoom":0,"opacity":0.8}]},{"method":"addLegend","args":[{"colors":["#FDE725 , #B1DD2D 11.5984228740705%, #40BD71 30.4594674321915%, #20918C 49.3205119903124%, #32648E 68.1815565484341%, #472D7C 87.0426011065557%, #440154 "],"labels":["37.2","37.0","36.8","36.6","36.4"],"na_color":null,"na_label":"NA","opacity":1,"position":"bottomright","type":"numeric","title":"sss|2026-01-28 12:00:00","extra":{"p_1":0.1159842287407052,"p_n":0.8704260110655569},"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[24.24999999999999,25.75],"lng":[-83.25,-80]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

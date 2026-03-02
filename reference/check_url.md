@@ -39,12 +39,12 @@ crashes R if `url` is offline.
 ``` r
 check_url("https://coastwatch.pfeg.noaa.gov/erddap/griddap/NOAA_DHW.html")
 #> $online
-#> [1] FALSE
+#> [1] TRUE
 #> 
 #> $status_code
-#> [1] 503
+#> [1] 200
 #> 
 #> $message
-#> [1] "Server is online with status code: 503"
+#> [1] "Server is online with status code: 200"
 #> 
 ```

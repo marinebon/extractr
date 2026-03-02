@@ -65,8 +65,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">ed</span> <span class="op">&lt;-</span> <span class="fu"><a href="ed_info.html">ed_info</a></span><span class="op">(</span><span class="st">"https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.html"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">ed_dim</span><span class="op">(</span><span class="va">ed</span>, <span class="st">"LEV"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Failed to open 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.csvp?LEV': The requested URL returned error: 500</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error in open.connection(structure(4L, class = c("curl", "connection"), conn_id = &lt;pointer: 0x55c05ea97930&gt;),  : </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cannot open the connection</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cannot open the connection</span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in ed_dim(ed, "LEV"):</span> Problem fetching dimension LEV from ERDDAP: https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.csvp?LEV</span>
 </code></pre></div>
     </div>
